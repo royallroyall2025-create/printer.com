@@ -6,11 +6,9 @@
     <title>Royal Cafe POS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Add Star Micronics SDK for TSP100 support -->
-    <script src="https://lib.starmicronicscloud.com/WebClient/8.0.0/stario-extension.js"></script>
-    <script src="https://lib.starmicronicscloud.com/WebClient/8.0.0/stario.js"></script>
+    <!-- Add SheetJS library for Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        /* Your existing CSS styles remain unchanged */
         * {
             margin: 0;
             padding: 0;
@@ -18,11 +16,146 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
+        /* Login Page Styles */
+        .login-page {
+            background: linear-gradient(135deg, #db2777 0%, #ec4899 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo h1 {
+            color: #db2777;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .login-logo .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .login-form-group {
+            margin-bottom: 20px;
+        }
+
+        .login-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .login-form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .login-form-group input:focus {
+            outline: none;
+            border-color: #db2777;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #db2777 0%, #ec4899 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .login-demo-credentials {
+            background: #fdf2f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+            border: 1px solid #fbcfe8;
+        }
+
+        .login-demo-credentials h4 {
+            margin-bottom: 8px;
+            color: #db2777;
+        }
+
+        .user-role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #db2777;
+            color: white;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+            text-transform: uppercase;
+        }
+
+        .user-role-badge.staff {
+            background: #0ea5e9;
+        }
+
+        .user-role-badge.admin {
+            background: #db2777;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Existing POS Styles */
         body {
             background-color: #fdf2f8;
             color: #333;
-            padding: 20px;
+            padding: 10px;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         .dashboard {
@@ -34,20 +167,22 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 95vh;
+            min-height: 90vh;
         }
         
         header {
             background: linear-gradient(135deg, #db2777 0%, #ec4899 100%);
             color: white;
-            padding: 20px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .logo {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -55,7 +190,15 @@
         }
         
         .logo i {
-            font-size: 32px;
+            font-size: 28px;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         
         .user-info {
@@ -68,8 +211,8 @@
         }
         
         .avatar {
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             background: rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             display: flex;
@@ -82,14 +225,18 @@
             display: flex;
             background: #fce7f3;
             border-bottom: 1px solid #fbcfe8;
+            flex-wrap: wrap;
         }
         
         .nav-tab {
-            padding: 15px 25px;
+            padding: 12px 20px;
             cursor: pointer;
             font-weight: 500;
             transition: all 0.3s;
             border-bottom: 3px solid transparent;
+            flex: 1;
+            text-align: center;
+            min-width: 140px;
         }
         
         .nav-tab.active {
@@ -103,9 +250,8 @@
             color: white;
         }
         
-        /* Image Slider Styles */
         .slider-container {
-            height: 200px;
+            height: 430px;
             position: relative;
             overflow: hidden;
             background: #fce7f3;
@@ -114,7 +260,7 @@
         .slider {
             display: flex;
             width: 300%;
-            height: 100%;
+            height: 300%;
             transition: transform 0.5s ease-in-out;
         }
         
@@ -128,37 +274,37 @@
             background-position: center;
             color: white;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
         }
         
         .slide-1 {
             background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
-                        url('https://scontent.fpnh8-2.fna.fbcdn.net/v/t39.30808-6/486465212_1113607097446186_7542641408199539348_n.jpg?stp=dst-jpg_s206x206_tt6&_nc_cat=107&ccb=1-7&_nc_sid=714c7a&_nc_eui2=AeGSd6CFl12C6clme0tmXsrZncB3d97Rh2CdwHd33tGHYKdMjnjOnQXSir8-bQqPe43G_xXojkeqAJfHyG2hO-7-&_nc_ohc=0WwD4A3hZscQ7kNvwFwgI1y&_nc_oc=AdlOYkDr5lgualofhhQFSwXe5xE3WmZNQ5C2dap0K2gmk4wx4_p8ovW-daI8vW5Qysg&_nc_zt=23&_nc_ht=scontent.fpnh8-2.fna&_nc_gid=Amhx1Zl2yb5z7PxYccV5ZQ&oh=00_AfZ9PyhXLcXOKd6HL0SVxu-SKtQ6cdnsT8yF3QAvmDh-tw&oe=68D32DA7');
+                        url('https://i.pinimg.com/originals/45/83/02/458302edaeb14ecc2894ac0ee0d54347.gif');
         }
         
         .slide-2 {
             background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
-                        url('https://scontent.fpnh8-1.fna.fbcdn.net/v/t39.30808-6/448605764_908134477993450_5248456771952105491_n.jpg?stp=dst-jpg_s206x206_tt6&_nc_cat=110&ccb=1-7&_nc_sid=7a06f5&_nc_eui2=AeHiUXf-5csHQcDMw1SzOW_WIadhxHoVlDkhp2HEehWUOcaj5ADNcIGluIUBU7xhhs_NK7tWG_80HxkcZLfK0yWS&_nc_ohc=kptGGUBZt5MQ7kNvwEVSeRr&_nc_oc=AdliWd2Bwf8E9kMuEJs_VwmGvncSgMUuPZidA9v_ajrDOfXhLeKQg0NlCVgkLMCTwH4&_nc_zt=23&_nc_ht=scontent.fpnh8-1.fna&_nc_gid=yMJ_3UOu_ilTAkR2qkXPSQ&oh=00_AfbXjk31pxnq2fjuz5OCHpAbpaxManAcH9QjYah-a45VMw&oe=68D33C13');
+                        url('https://i.pinimg.com/originals/45/83/02/458302edaeb14ecc2894ac0ee0d54347.gif');
         }
         
         .slide-3 {
             background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
-                        url('https://scontent.fpnh8-3.fna.fbcdn.net/v/t39.30808-6/486280077_1113595500780679_4349294778887170977_n.jpg?stp=dst-jpg_s206x206_tt6&_nc_cat=102&ccb=1-7&_nc_sid=714c7a&_nc_eui2=AeEcixA2zGMfz7aFlTIny1tnvfUH2aja_q699QfZqNr-rhA-cE5jPEykWJHbd-52O6Dg2qBXQOUxQXvVNIbfblQX&_nc_ohc=F9fAIAinuLUQ7kNvwGetJ5s&_nc_oc=AdmW0B4XJGWtfmMh268ujY9Rj4RDTx_b7WUepy84yq6TTBsy1HRT3LKyiTyL6BVKmRs&_nc_zt=23&_nc_ht=scontent.fpnh8-3.fna&_nc_gid=LzFXnSBLBKpjyv5dwr8LIA&oh=00_AfaBsqlq8H4nE9dtG0lL_4JibjpxgtjytVL_6PvTMQfjqw&oe=68D3462E');
+                        url('https://i.pinimg.com/originals/45/83/02/458302edaeb14ecc2894ac0ee0d54347.gif');
         }
         
         .slider-nav {
             position: absolute;
-            bottom: 15px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
         
         .slider-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.5);
             cursor: pointer;
@@ -172,46 +318,88 @@
         .main-content {
             display: grid;
             grid-template-columns: 3fr 1fr;
-            gap: 20px;
-            padding: 20px;
+            gap: 15px;
+            padding: 15px;
             flex: 1;
             overflow: hidden;
+            min-height: 400px;
         }
         
         .order-section {
             background: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             border: 1px solid #fbcfe8;
+            min-height: 500px;
         }
         
         .order-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
             border-bottom: 2px solid #fdf2f8;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .search-container {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px 40px 10px 12px;
+            border: 1px solid #fbcfe8;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fdf2f8;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #db2777;
+            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #db2777;
+            font-size: 16px;
+        }
+        
+        .search-results-info {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #9d174d;
+            font-weight: 500;
         }
         
         .categories {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
         }
         
         .category-btn {
-            padding: 12px 20px;
+            padding: 10px 15px;
             background: #fdf2f8;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
             transition: all 0.3s;
             color: #db2777;
+            font-size: 14px;
         }
         
         .category-btn.active {
@@ -228,25 +416,26 @@
             overflow-y: auto;
             flex: 1;
             padding-right: 5px;
+            min-height: 300px;
         }
         
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
         }
         
         .menu-item {
             background: #fdf2f8;
-            border-radius: 12px;
-            padding: 15px;
+            border-radius: 10px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 200px;
+            min-height: 180px;
             border: 1px solid #fbcfe8;
             position: relative;
             overflow: hidden;
@@ -260,15 +449,15 @@
         
         .menu-item-image {
             width: 100%;
-            height: 200px;
+            height: 120px;
             object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
         }
         
         .menu-item h3 {
-            font-size: 16px;
-            margin-bottom: 8px;
+            font-size: 14px;
+            margin-bottom: 6px;
             color: #9d174d;
         }
         
@@ -276,70 +465,82 @@
             color: #db2777;
             font-weight: 600;
             margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         
         .menu-item small {
             color: #be185d;
-            font-size: 12px;
+            font-size: 11px;
         }
         
         .cart-section {
             background: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             overflow: hidden;
             border: 1px solid #fbcfe8;
+            min-height: 500px;
         }
         
         .cart-header {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
             border-bottom: 2px solid #fdf2f8;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .cart-items {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             overflow-y: auto;
             flex: 1;
+            min-height: 200px;
+            max-height: 300px;
         }
         
         .cart-item {
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #fdf2f8;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         
         .cart-item-details {
             display: flex;
             flex-direction: column;
             flex: 1;
-            padding-right: 10px;
+            padding-right: 8px;
+            min-width: 150px;
         }
         
         .cart-item-name {
             font-weight: 500;
             display: flex;
             flex-direction: column;
+            font-size: 14px;
         }
         
         .cart-item-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             margin-top: 5px;
         }
         
         .quantity-btn {
-            width: 28px;
-            height: 28px;
-            borderRadius: 50%;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
             border: none;
             background: #db2777;
             color: white;
@@ -347,6 +548,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 12px;
         }
         
         .cart-item-price {
@@ -355,45 +557,48 @@
             display: flex;
             align-items: center;
             flex-direction: column;
+            text-align: right;
+            font-size: 14px;
         }
         
         .cart-totals {
-            margin: 20px 0;
-            padding: 20px;
+            margin: 15px 0;
+            padding: 15px;
             background: #fdf2f8;
-            border-radius: 12px;
+            border-radius: 10px;
         }
         
         .total-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
         }
         
         .total-final {
             font-weight: bold;
-            font-size: 20px;
-            margin-top: 15px;
-            padding-top: 15px;
+            font-size: 18px;
+            margin-top: 12px;
+            padding-top: 12px;
             border-top: 2px solid #fbcfe8;
             color: #9d174d;
         }
         
         .pay-btn {
             width: 100%;
-            padding: 18px;
+            padding: 15px;
             background: #db2777;
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 18px;
+            border-radius: 10px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: background 0.3s;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         
         .pay-btn:hover {
@@ -401,33 +606,116 @@
         }
         
         .notes-section {
-            margin-top: 20px;
+            margin-top: 15px;
         }
         
         textarea {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             border: 1px solid #fbcfe8;
-            border-radius: 12px;
+            border-radius: 10px;
             resize: vertical;
-            min-height: 100px;
-            margin-top: 10px;
+            min-height: 80px;
+            margin-top: 8px;
             background: #fdf2f8;
+            font-size: 14px;
         }
         
         .empty-cart {
             text-align: center;
             color: #888;
-            padding: 30px 0;
+            padding: 20px 0;
         }
         
         .empty-cart i {
-            font-size: 40px;
-            margin-bottom: 15px;
+            font-size: 32px;
+            margin-bottom: 10px;
             color: #fbcfe8;
         }
         
-        /* Sugar Level Modal */
+        .discount-section {
+            margin: 12px 0;
+            padding: 12px;
+            background: #f0f9ff;
+            border-radius: 8px;
+            border: 1px solid #bae6fd;
+        }
+        
+        .discount-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .discount-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        
+        .discount-type {
+            padding: 8px;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
+        }
+        
+        .discount-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .apply-discount-btn {
+            flex: 1;
+            padding: 8px;
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        
+        .apply-discount-btn:hover {
+            background: #0284c7;
+        }
+        
+        .remove-discount-btn {
+            flex: 1;
+            padding: 8px;
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        
+        .remove-discount-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .discount-applied {
+            color: #0ea5e9;
+            font-weight: 600;
+            text-align: center;
+            padding: 5px;
+            background: #e0f2fe;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
         .customization-modal-overlay {
             position: fixed;
             top: 0;
@@ -538,7 +826,6 @@
             background: #e5e7eb;
         }
         
-        /* Reports Section */
         .reports-section {
             display: none;
             padding: 20px;
@@ -575,9 +862,9 @@
             background: #fdf2f8;
         }
         
-        .report-btn {
+        .clear-history-btn {
             padding: 10px 20px;
-            background: #db2777;
+            background: #ef4444;
             color: white;
             border: none;
             border-radius: 8px;
@@ -586,8 +873,8 @@
             align-self: flex-end;
         }
         
-        .report-btn:hover {
-            background: #be185d;
+        .clear-history-btn:hover {
+            background: #dc2626;
         }
         
         .report-summary {
@@ -666,7 +953,6 @@
             color: #888;
         }
         
-        /* Receipt Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -790,16 +1076,15 @@
             background: #e5e7eb;
         }
         
-        /* Language Toggle */
         .language-toggle {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-left: 15px;
             background: rgba(255, 255, 255, 0.2);
             padding: 6px 12px;
             border-radius: 20px;
             cursor: pointer;
+            font-size: 14px;
         }
         
         .language-toggle:hover {
@@ -807,58 +1092,35 @@
         }
         
         .language-flag {
-            font-size: 18px;
+            font-size: 16px;
         }
         
-        /* Khmer Price Styles - MODIFIED TO MAKE KHR PRICES BIGGER */
         .khmer-price {
             font-family: 'Khmer OS', 'Moul', sans-serif;
-            font-size: 16px; /* Increased from 12px */
-            font-weight: bold; /* Added bold */
+            font-size: 16px;
+            font-weight: bold;
             color: #9d174d;
-            margin-top: 5px; /* Increased from 3px */
+            margin-top: 5px;
         }
         
         .khmer-price-receipt {
             font-family: 'Khmer OS', 'Moul', sans-serif;
-            font-size: 14px; /* Increased from 12px */
-            font-weight: bold; /* Added bold */
-            color: #9d174d; /* Changed from #666 to match theme */
+            font-size: 14px;
+            font-weight: bold;
+            color: #9d174d;
         }
         
         .khmer-total {
             font-family: 'Khmer OS', 'Moul', sans-serif;
             font-weight: bold;
-            font-size: 16px; /* Added size for receipts */
-        }
-
-        /* Additional style for menu items to make KHR prices stand out */
-        .menu-item p {
-            color: #db2777;
-            font-weight: 600;
-            margin-top: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            font-size: 16px;
         }
         
-        /* Make USD price slightly smaller when KHR is shown */
         .usd-price {
             font-size: 14px;
             color: #be185d;
         }
         
-        /* Cart item price styling */
-        .cart-item-price {
-            font-weight: 600;
-            color: #db2777;
-            display: flex;
-            align-items: center;
-            flex-direction: column;
-            text-align: right;
-        }
-        
-        /* Receipt price styling */
         .receipt-item-price {
             display: flex;
             flex-direction: column;
@@ -866,7 +1128,6 @@
         }
         
         .price-toggle {
-            margin-left: 15px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -875,142 +1136,784 @@
             border-radius: 20px;
             cursor: pointer;
             white-space: nowrap;
+            font-size: 14px;
         }
         
         .price-toggle:hover {
             background: rgba(255, 255, 255, 0.3);
         }
         
-        /* Printer Status Styles */
-        .printer-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 12px;
-            border-radius: 20px;
+        .discount-row {
+            color: #0ea5e9;
+            font-weight: 600;
+        }
+        
+        .printer-config-modal {
+            background: white;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .printer-config-section {
+            margin-bottom: 20px;
+        }
+        
+        .printer-config-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #9d174d;
+        }
+        
+        .printer-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #fbcfe8;
+            border-radius: 8px;
+            margin-bottom: 10px;
             font-size: 14px;
         }
         
-        .printer-connected {
-            color: #4ade80;
+        .printer-test-btn {
+            padding: 10px 15px;
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 10px;
         }
         
-        .printer-disconnected {
-            color: #f87171;
+        .printer-test-btn:hover {
+            background: #0284c7;
         }
         
-        .printer-connecting {
-            color: #fbbf24;
+        .printer-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: 500;
         }
         
-        @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 2fr 1fr;
+        .printer-status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .printer-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .printer-help {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .printer-help h4 {
+            margin-bottom: 8px;
+            color: #0c4a6e;
+        }
+        
+        .printer-help ol {
+            margin-left: 20px;
+        }
+        
+        .printer-help li {
+            margin-bottom: 5px;
+        }
+
+        .printer-config-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            border: none;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .printer-config-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .global-status {
+            padding: 10px 20px;
+            text-align: center;
+            font-weight: 500;
+            border-bottom: 1px solid #fbcfe8;
+        }
+        
+        .global-status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .global-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .global-status.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        /* Add styles for Excel export buttons */
+        .excel-export-btn {
+            padding: 10px 20px;
+            background: #0d9488;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .excel-export-btn:hover {
+            background: #0f766e;
+        }
+        
+        .excel-export-btn.detailed {
+            background: #059669;
+        }
+        
+        .excel-export-btn.detailed:hover {
+            background: #047857;
+        }
+        
+        .report-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Add Product Button Styles */
+        .add-product-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            border: none;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .add-product-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Product Manager Modal Styles */
+        .product-manager-modal {
+            background: white;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-form {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #9d174d;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #fbcfe8;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fdf2f8;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #db2777;
+            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .save-btn {
+            flex: 1;
+            padding: 12px;
+            background: #db2777;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .save-btn:hover {
+            background: #be185d;
+        }
+
+        .cancel-btn {
+            flex: 1;
+            padding: 12px;
+            background: #f3f4f6;
+            color: #4b5563;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .cancel-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .product-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #fdf2f8;
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-info h4 {
+            margin: 0;
+            color: #9d174d;
+            font-size: 14px;
+        }
+
+        .product-info p {
+            margin: 2px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .edit-btn, .delete-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .edit-btn {
+            background: #0ea5e9;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #0284c7;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             
-            .menu-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            .receipt-modal, 
+            .receipt-modal * {
+                visibility: visible;
             }
             
-            .report-summary {
-                grid-template-columns: repeat(2, 1fr);
+            .receipt-modal {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 80mm !important;
+                max-width: 80mm !important;
+                min-width: 80mm !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                font-size: 12px !important;
+                line-height: 1.2 !important;
             }
+            
+            .receipt-header {
+                padding: 10px !important;
+                font-size: 14px !important;
+            }
+            
+            .receipt-body {
+                padding: 10px !important;
+            }
+            
+            .receipt-info {
+                margin-bottom: 10px !important;
+                padding-bottom: 8px !important;
+                font-size: 11px !important;
+            }
+            
+            .receipt-item {
+                margin-bottom: 5px !important;
+                font-size: 11px !important;
+            }
+            
+            .receipt-sugar, .receipt-topping {
+                font-size: 10px !important;
+            }
+            
+            .receipt-totals {
+                padding-top: 8px !important;
+                margin: 10px 0 !important;
+            }
+            
+            .receipt-footer {
+                padding: 10px 0 !important;
+                font-size: 11px !important;
+            }
+            
+            .receipt-buttons,
+            .no-print {
+                display: none !important;
+            }
+            
+            .receipt-item-details,
+            .receipt-item-price {
+                font-family: 'Courier New', monospace !important;
+            }
+            
+            page-break-inside: avoid;
         }
         
+        /* ===== MOBILE RESPONSIVE FIXES ===== */
         @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
+            body {
+                padding: 5px;
             }
             
             .dashboard {
                 height: auto;
+                min-height: 100vh;
+                border-radius: 12px;
             }
             
-            .slider-container {
-                height: 150px;
+            header {
+                padding: 10px 15px;
+                flex-direction: column;
+                gap: 10px;
             }
             
-            .report-summary {
-                grid-template-columns: 1fr;
-            }
-            
-            .nav-tabs {
-                flex-wrap: wrap;
-            }
-            
-            .nav-tab {
-                flex: 1;
-                text-align: center;
-                padding: 12px;
-            }
-            
-            .receipt-modal {
-                width: 95%;
-            }
-            
-            .sugar-options, .topping-options {
+            .logo {
+                font-size: 20px;
                 justify-content: center;
             }
             
-            .sugar-option, .topping-option {
-                width: 45%;
-                margin-bottom: 10px;
-            }
-            
-            .price-toggle {
-                margin-top: 10px;
-                margin-left: 0;
-            }
-            
-            .printer-status {
-                margin-top: 10px;
-                margin-left: 0;
-            }
-        }
-        
-        /* Print Styles for Receipt */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            .receipt-modal, .receipt-modal * {
-                visibility: visible;
-            }
-            .receipt-modal {
-                position: absolute;
-                left: 0;
-                top: 0;
+            .header-controls {
                 width: 100%;
-                max-width: 100%;
-                box-shadow: none;
+                justify-content: space-between;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding: 5px 0;
             }
-            .receipt-buttons {
-                display: none;
+            
+            .language-toggle,
+            .price-toggle,
+            .printer-config-btn,
+            .add-product-btn {
+                flex-shrink: 0;
+                margin: 0 2px;
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+            
+            .user-info {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+            
+            .avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+            
+            .nav-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+            
+            .nav-tab {
+                min-width: 120px;
+                padding: 10px 15px;
+                font-size: 13px;
+                white-space: nowrap;
+            }
+            
+            .slider-container {
+                height: 100px;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 10px;
+                overflow: visible;
+            }
+            
+            .order-section,
+            .cart-section {
+                min-height: auto;
+                padding: 12px;
+            }
+            
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .menu-item {
+                min-height: 150px;
+                padding: 8px;
+            }
+            
+            .menu-item-image {
+                height: 80px;
+            }
+            
+            .menu-item h3 {
+                font-size: 12px;
+            }
+            
+            .menu-item small {
+                font-size: 10px;
+            }
+            
+            .cart-items {
+                max-height: 200px;
+            }
+            
+            .cart-item {
+                font-size: 12px;
+            }
+            
+            .search-input {
+                font-size: 14px;
+                padding: 8px 35px 8px 10px;
+            }
+            
+            .category-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .pay-btn {
+                padding: 12px;
+                font-size: 14px;
+            }
+            
+            /* Fix modal sizes for mobile */
+            .customization-modal,
+            .receipt-modal,
+            .printer-config-modal,
+            .product-manager-modal {
+                width: 95% !important;
+                margin: 10px;
+            }
+            
+            .sugar-options,
+            .topping-options {
+                justify-content: center;
+            }
+            
+            .sugar-option,
+            .topping-option {
+                width: 45%;
+                margin: 5px;
+            }
+
+            .form-actions {
+                flex-direction: column;
             }
         }
         
-        /* Custom scrollbar */
+        @media (max-width: 480px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .menu-item {
+                min-height: 140px;
+            }
+            
+            .menu-item-image {
+                height: 70px;
+            }
+            
+            .header-controls {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .language-toggle,
+            .price-toggle,
+            .printer-config-btn,
+            .add-product-btn {
+                width: 100%;
+                justify-content: center;
+                margin: 2px 0;
+            }
+            
+            .cart-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .cart-item-price {
+                align-self: flex-end;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .menu-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .main-content {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        
+        /* Ensure scrolling works properly */
+        .menu-container,
+        .cart-items,
+        .reports-section {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
         
         ::-webkit-scrollbar-track {
             background: #fdf2f8;
-            border-radius: 10px;
+            border-radius: 8px;
         }
         
         ::-webkit-scrollbar-thumb {
             background: #fbcfe8;
-            border-radius: 10px;
+            border-radius: 8px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
             background: #f9a8d4;
         }
+        
+        /* NEW STYLES FOR PRINTING */
+        .print-status-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .print-status-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .print-status-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .print-status-icon.success {
+            color: #10b981;
+        }
+        
+        .print-status-icon.error {
+            color: #ef4444;
+        }
+        
+        .print-status-icon.info {
+            color: #3b82f6;
+        }
+        
+        .print-status-message {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .print-retry-btn {
+            padding: 10px 20px;
+            background: #db2777;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+        }
+        
+        .print-fallback-btn {
+            padding: 10px 20px;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+        }
+        
+        .print-close-btn {
+            padding: 10px 20px;
+            background: #f3f4f6;
+            color: #4b5563;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+        }
+        
+        .usb-permission-request {
+            background: #e0f2fe;
+            border-left: 4px solid #0ea5e9;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        
+        .usb-permission-request h4 {
+            color: #0c4a6e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .usb-permission-btn {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .usb-permission-btn:hover {
+            background: #0284c7;
+        }
+        
+        .platform-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .platform-info.hidden {
+            display: none;
+        }
+        
+        .platform-info i {
+            font-size: 18px;
+        }
+        
+        .platform-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .platform-info {
+                font-size: 12px;
+                padding: 8px 15px;
+            }
+        }
     </style>
-    <!-- Load Khmer fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Moul&display=swap" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hanuman:wght@300;400;700&display=swap');
@@ -1020,29 +1923,454 @@
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-page">
+        <div class="login-container">
+            <div class="login-logo">
+                <h1>
+                    <i class="fas fa-crown"></i>
+                    Royal Tea&Cafe
+                </h1>
+                <div class="subtitle">POS System Login</div>
+            </div>
+
+            <form id="loginForm">
+                <div class="login-form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required>
+                </div>
+
+                <div class="login-form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="login-btn">Login to POS</button>
+
+                <div class="login-error-message" id="loginErrorMessage">
+                    Invalid username or password
+                </div>
+
+                <!-- Demo credentials for testing -->
+                <div class="login-demo-credentials">
+                    <h4>Demo Credentials:</h4>
+                    <div>
+                        <strong>Admin:</strong> admin / password123 
+                        <span class="user-role-badge admin">Admin</span>
+                    </div>
+                    <div>
+                        <strong>Staff:</strong> staff / staff123 
+                        <span class="user-role-badge staff">Staff</span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
+                        <strong>Note:</strong> Staff accounts cannot access reports or clear history
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- POS Dashboard (Initially Hidden) -->
+    <div id="posDashboard" class="hidden">
+        <div id="root"></div>
+    </div>
 
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <script type="text/babel">
+        // ==================== PRINTING FIXES ====================
+        
+        // Platform detection utility
+        const detectPlatform = () => {
+            const userAgent = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+            const isAndroid = /Android/.test(userAgent);
+            const isChrome = /Chrome/.test(userAgent) && !/Edge/.test(userAgent);
+            const supportsWebUSB = 'usb' in navigator && isChrome && !isIOS;
+            
+            return {
+                isIOS,
+                isAndroid,
+                isDesktop: !isAndroid && !isIOS,
+                supportsWebUSB,
+                browser: isChrome ? 'Chrome' : /Safari/.test(userAgent) ? 'Safari' : 'Other',
+                isMobile: isAndroid || isIOS
+            };
+        };
+        
+        // ESC/POS command generator for Star TSP100III printer
+        const generateEscPosCommands = (receiptData, language) => {
+            const encoder = new TextEncoder();
+            let commands = [];
+            
+            // Initialize printer
+            commands.push(0x1B, 0x40); // ESC @ - Initialize
+            
+            // Title (centered, double height/width)
+            commands.push(0x1B, 0x61, 0x01); // Center align
+            commands.push(0x1D, 0x21, 0x11); // Double height & width
+            commands.push(...encoder.encode("ROYAL TEA & CAFE\n"));
+            commands.push(0x1D, 0x21, 0x00); // Normal text
+            commands.push(0x1B, 0x61, 0x00); // Left align
+            
+            // Receipt info
+            commands.push(...encoder.encode("================================\n"));
+            commands.push(0x1B, 0x21, 0x08); // Bold
+            commands.push(...encoder.encode(`Order #${receiptData.orderNumber}\n`));
+            commands.push(0x1B, 0x21, 0x00); // Normal
+            
+            commands.push(...encoder.encode(`${receiptData.date}\n`));
+            commands.push(...encoder.encode(`${receiptData.time}\n`));
+            commands.push(...encoder.encode("--------------------------------\n"));
+            
+            // Items header
+            commands.push(0x1B, 0x21, 0x08); // Bold
+            commands.push(...encoder.encode("Qty  Item                 Price\n"));
+            commands.push(0x1B, 0x21, 0x00); // Normal
+            commands.push(...encoder.encode("--------------------------------\n"));
+            
+            // Items
+            receiptData.items.forEach(item => {
+                const name = language === 'en' ? item.name : item.nameKh;
+                const qty = item.quantity.toString().padStart(2);
+                const price = `$${(item.price * item.quantity).toFixed(2)}`.padStart(7);
+                
+                // Truncate long names
+                let displayName = name;
+                if (displayName.length > 20) {
+                    displayName = displayName.substring(0, 17) + '...';
+                }
+                
+                const line = `${qty}x ${displayName.padEnd(20)}${price}\n`;
+                commands.push(...encoder.encode(line));
+                
+                // Add customization info if present
+                if (item.sugarLevel) {
+                    commands.push(...encoder.encode(`   Sugar: ${item.sugarLevel}\n`));
+                }
+                if (item.topping) {
+                    const toppingName = language === 'en' ? item.topping.name : item.topping.nameKh;
+                    commands.push(...encoder.encode(`   Topping: ${toppingName}\n`));
+                }
+            });
+            
+            // Totals
+            commands.push(...encoder.encode("--------------------------------\n"));
+            commands.push(...encoder.encode(`Subtotal: $${receiptData.subtotal.toFixed(2)}\n`));
+            
+            if (receiptData.discount > 0) {
+                commands.push(...encoder.encode(`Discount: -$${receiptData.discount.toFixed(2)}\n`));
+            }
+            
+            commands.push(0x1B, 0x21, 0x10); // Bold + double height
+            commands.push(...encoder.encode(`TOTAL: $${receiptData.total.toFixed(2)}\n`));
+            commands.push(0x1B, 0x21, 0x00); // Normal
+            
+            // Footer
+            commands.push(...encoder.encode("================================\n"));
+            commands.push(0x1B, 0x61, 0x01); // Center align
+            commands.push(...encoder.encode("Thank you for your visit!\n"));
+            commands.push(...encoder.encode("Please come again\n\n\n"));
+            commands.push(0x1B, 0x61, 0x00); // Left align
+            
+            // Add cashier info if available
+            if (receiptData.cashier) {
+                commands.push(...encoder.encode(`Cashier: ${receiptData.cashier}\n`));
+            }
+            
+            // Cut paper (partial cut)
+            commands.push(0x1D, 0x56, 0x41, 0x10); // GS V 41 10 - Partial cut
+            
+            return new Uint8Array(commands);
+        };
+        
+        // WebUSB printing function
+        const printViaWebUSB = async (receiptData, language) => {
+            try {
+                console.log('Starting WebUSB print...');
+                
+                // Request USB device (Star Micronics vendor ID: 0x0519)
+                const device = await navigator.usb.requestDevice({ 
+                    filters: [{ vendorId: 0x0519 }] 
+                }).catch(err => {
+                    console.log('User cancelled device selection');
+                    throw new Error('No printer selected');
+                });
+                
+                console.log('Device selected:', device);
+                
+                await device.open();
+                await device.selectConfiguration(1);
+                await device.claimInterface(0);
+                
+                // Generate ESC/POS commands
+                const escposData = generateEscPosCommands(receiptData, language);
+                
+                // Send to printer
+                await device.transferOut(1, escposData);
+                
+                // Close connection
+                await device.close();
+                
+                console.log('Print successful via WebUSB');
+                return { success: true, message: 'Receipt printed successfully!' };
+            } catch (error) {
+                console.error('WebUSB print error:', error);
+                return { 
+                    success: false, 
+                    message: error.message || 'Failed to print via USB. Please check printer connection.'
+                };
+            }
+        };
+        
+        // Network printing function
+        const printViaNetwork = async (receiptData, language, printerSettings) => {
+            try {
+                if (!printerSettings.ipAddress) {
+                    throw new Error('No printer IP configured');
+                }
+                
+                // Generate ESC/POS commands
+                const escposData = generateEscPosCommands(receiptData, language);
+                
+                // Convert to ArrayBuffer for network transmission
+                const arrayBuffer = escposData.buffer;
+                
+                // Try to send via fetch with proper headers
+                try {
+                    const response = await fetch(`http://${printerSettings.ipAddress}:${printerSettings.port || 80}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/octet-stream'
+                        },
+                        body: arrayBuffer,
+                        mode: 'no-cors' // Important for cross-origin requests
+                    });
+                    
+                    // With no-cors mode, we can't check response status
+                    // If we get here without error, assume success
+                    return { success: true, message: 'Receipt sent to network printer!' };
+                } catch (fetchError) {
+                    console.log('Fetch failed, trying alternative method...');
+                    
+                    // Alternative: Create a form submission (works with some print servers)
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `http://${printerSettings.ipAddress}:${printerSettings.port || 80}`;
+                    form.enctype = 'application/octet-stream';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'data';
+                    // Convert to hex string
+                    const hexData = Array.from(new Uint8Array(arrayBuffer))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join('');
+                    input.value = hexData;
+                    
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                    document.body.removeChild(form);
+                    
+                    return { success: true, message: 'Receipt sent via form submission!' };
+                }
+            } catch (error) {
+                console.error('Network print error:', error);
+                return { 
+                    success: false, 
+                    message: 'Failed to connect to network printer. Check IP address and network connection.'
+                };
+            }
+        };
+        
+        // Print Status Modal Component
+        const PrintStatusModal = ({ status, onRetry, onFallback, onClose, language }) => {
+            if (!status) return null;
+            
+            const t = {
+                en: {
+                    retry: "Retry",
+                    printViaBrowser: "Print via Browser",
+                    close: "Close"
+                },
+                km: {
+                    retry: "ព្យាយាមម្តងទៀត",
+                    printViaBrowser: "បោះពុម្ពតាមកម្មវិធីរុករក",
+                    close: "បិទ"
+                }
+            }[language];
+            
+            return (
+                <div className="print-status-overlay">
+                    <div className="print-status-modal">
+                        <div className={`print-status-icon ${status.success === null ? 'info' : status.success ? 'success' : 'error'}`}>
+                            {status.success === null ? '⏳' : status.success ? '✅' : '❌'}
+                        </div>
+                        <div className="print-status-message">{status.message}</div>
+                        <div>
+                            {!status.success && (
+                                <button className="print-retry-btn" onClick={onRetry}>
+                                    {t.retry}
+                                </button>
+                            )}
+                            {!status.success && (
+                                <button className="print-fallback-btn" onClick={onFallback}>
+                                    {t.printViaBrowser}
+                                </button>
+                            )}
+                            <button className="print-close-btn" onClick={onClose}>
+                                {t.close}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // USB Permission Request Component
+        const USBPermissionRequest = ({ onRequest, language }) => {
+            const platform = detectPlatform();
+            
+            if (!platform.supportsWebUSB || platform.isIOS) return null;
+            
+            const t = {
+                en: {
+                    usbPrinterSetup: "USB Printer Setup",
+                    usbSetupInstructions: "Connect your Star TSP100III printer via USB cable and click below to grant permission.",
+                    grantUsbPermission: "Grant USB Permission"
+                },
+                km: {
+                    usbPrinterSetup: "ការដំឡើងម៉ាស៊ីនបោះពុម្ព USB",
+                    usbSetupInstructions: "តភ្ជាប់ម៉ាស៊ីនបោះពុម្ព Star TSP100III របស់អ្នកតាមរយៈ cable USB ហើយចុចខាងក្រោមដើម្បីផ្តល់ការអនុញ្ញាត។",
+                    grantUsbPermission: "ផ្តល់ការអនុញ្ញាត USB"
+                }
+            }[language];
+            
+            return (
+                <div className="usb-permission-request">
+                    <h4>
+                        <i className="fas fa-print"></i>
+                        {t.usbPrinterSetup}
+                    </h4>
+                    <p>{t.usbSetupInstructions}</p>
+                    <button className="usb-permission-btn" onClick={onRequest}>
+                        <i className="fas fa-plug"></i>
+                        {t.grantUsbPermission}
+                    </button>
+                </div>
+            );
+        };
+        
+        // Platform Info Banner Component
+        const PlatformInfoBanner = ({ platform, language, onHide }) => {
+            if (!platform.isMobile) return null;
+            
+            const t = {
+                en: {
+                    ipadMessage: 'iPad detected: Use Network Printer in settings for best results',
+                    androidMessage: 'Android device: USB printing available. Connect your printer via USB cable.',
+                    close: 'Close'
+                },
+                km: {
+                    ipadMessage: 'iPad ត្រូវបានរកឃើញ៖ ប្រើម៉ាស៊ីនបោះពុម្ពបណ្តាញនៅក្នុងការកំណត់សម្រាប់លទ្ធផលល្អបំផុត',
+                    androidMessage: 'ឧបករណ៍ Android៖ ការបោះពុម្ព USB មាន។ តភ្ជាប់ម៉ាស៊ីនបោះពុម្ពរបស់អ្នកតាមរយៈ cable USB។',
+                    close: 'បិទ'
+                }
+            }[language];
+            
+            const getPlatformMessage = () => {
+                if (platform.isIOS) {
+                    return t.ipadMessage;
+                } else if (platform.isAndroid) {
+                    return t.androidMessage;
+                }
+                return '';
+            };
+            
+            return (
+                <div className="platform-info">
+                    <i className="fas fa-info-circle"></i>
+                    <span>{getPlatformMessage()}</span>
+                    <span className="platform-tag">
+                        {platform.isIOS ? 'iPad' : platform.isAndroid ? 'Android' : 'Desktop'}
+                    </span>
+                    <button 
+                        onClick={onHide}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'white',
+                            cursor: 'pointer',
+                            marginLeft: '10px'
+                        }}
+                        title={t.close}
+                    >
+                        <i className="fas fa-times"></i>
+                    </button>
+                </div>
+            );
+        };
+        
+        // ==================== YOUR ORIGINAL POS CODE ====================
+        
+        // Login functionality
+        let currentUser = null;
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('loginErrorMessage');
+
+            // User authentication
+            const users = {
+                'admin': { password: 'password123', role: 'admin', displayName: 'Kimrong Leng' },
+                'staff': { password: 'staff123', role: 'staff', displayName: 'Staff Member' }
+            };
+
+            if (users[username] && users[username].password === password) {
+                // Successful login
+                currentUser = users[username];
+                errorMessage.style.display = 'none';
+                
+                // Hide login page and show POS dashboard
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('posDashboard').classList.remove('hidden');
+                
+                // Initialize the POS system with user role
+                initializePOS(currentUser);
+            } else {
+                // Failed login
+                errorMessage.style.display = 'block';
+            }
+        });
+
+        // Clear error message when user starts typing
+        document.getElementById('username').addEventListener('input', function() {
+            document.getElementById('loginErrorMessage').style.display = 'none';
+        });
+
+        document.getElementById('password').addEventListener('input', function() {
+            document.getElementById('loginErrorMessage').style.display = 'none';
+        });
+
+        // POS System Code (Your existing React code)
         const { useState, useEffect, useRef } = React;
 
-        // Define exchange rate (1 USD to KHR)
         const EXCHANGE_RATE = 4000;
 
-        // Function to convert USD to KHR
         const usdToKhr = (usd) => {
             return Math.round(usd * EXCHANGE_RATE);
         };
 
-        // Function to format KHR price
         const formatKhrPrice = (price) => {
             return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "៛";
         };
 
-        // Define topping options
         const toppingOptions = [
             { id: 1, name: "Snow Pearls", nameKh: "គុជព្រិល", price: 0.50 },
             { id: 2, name: "Honey Jack", nameKh: "គុជទឹកឃ្មុំ", price: 0.50 },
@@ -1052,80 +2380,108 @@
             { id: 6, name: "Cream", nameKh: "គ្រីម", price: 0.50 }
         ];
 
-        const menuData = {
-            'HOT SALES': [
-                { id: 1, name: "Egg Coffee", nameKh: "កាហ្វេពងមាន់", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400870518/detail/3766b6f6eaba4891bebd9fde7141dac0_1743326057978577924.webp" },
-                { id: 2, name: "Mocha", nameKh: "ម៉ូកា", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400210346/detail/98bc89b6cead43d68aa8ee8d568e6702_1743326057925986955.webp" },
-                { id: 3, name: "Coffee Latte", nameKh: "កាហ្វេឡាតេ", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400132834/detail/61f42574637c43b5b43917866acf5c96_1743326058008760193.webp" },
-                { id: 4, name: "Cappuccino", nameKh: "កាពូស៊ីណី", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401215610/detail/8fde6a9b8d7b408c9dd68a31a3e9f2f7_1743326058071300227.webp" },
-                { id: 5, name: "Coconut Cream Latte", nameKh: "កាហ្វេដូងគ្រីម", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185404772720/detail/8802d46d398e4a4fa029bed3d7285d07_1743326058048061389.webp" },
-                { id: 6, name: "Passion Cream", nameKh: "ផាសសិនគ្រីម", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401004116/detail/a9c41dfc878a430e970b392cc7a99313_1743326058107158839.webp" }
-            ],
-            'COFFEE': [
-                { id: 7, name: "Ice Espresso", nameKh: "កាហ្វេទឹកដោះគោ", price: 3.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401373335/detail/3750a0778b6f47fc8d887bb47ebcb6c7_1743326058114571174.webp" },
-                { id: 8, name: "Americano", nameKh: "កាហ្វេខ្មៅ", price: 3.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405444913/detail/c7259d977999409180313c4a4781bfbc_1743326058146738458.webp" },
-                { id: 9, name: "Black Coffee Honey", nameKh: "កាហ្វេខ្មៅទឹកឃ្មុំ", price: 3.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405908813/detail/8190dc78882a4766994d6d95500f3586_1743326058132293382.webp" },
-                { id: 10, name: "Vanilla Latte", nameKh: "វ៉ាន់នីឡា ឡាតេ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400228558/detail/8cfda4aeb8d34679a1e3d742bdeeeaba_1743326057976112967.webp" },
-                { id: 11, name: "Caramel Latte", nameKh: "ការ៉ាមែលឡាតេ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400829807/detail/3d0eb53d114b410eb3f2a2c6a342577b_1743326058078583691.webp" },
-                { id: 12, name: "Coconut Coffee", nameKh: "កាហ្វេដូងក្រអូប", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400228558/detail/8cfda4aeb8d34679a1e3d742bdeeeaba_1743326057976112967.webp" }
-            ],
-            'FRAPPE': [
-                { id: 13, name: "Mocha Frappe", nameKh: "ម៉ូកាក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401043515/detail/d7286edd68a14244a8dffa550d3ac2f5_1743326058058727555.webp" },
-                { id: 14, name: "Vanilla Latte Frappe", nameKh: "វ៉ាន់នីឡាក្រឡុក", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185403715221/detail/fbe160a73a144de58a267da820aee2c5_1743326058119121945.webp" },
-                { id: 15, name: "Cappuccino Frappe", nameKh: "កាពូស៊ីណូក្រឡុក", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400610134/detail/ff9dd6f2b2714392877bef3bc7feced3_1743326057952816904.webp" },
-                { id: 16, name: "Chocolate Frappe", nameKh: "សូកូឡាក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400269375/detail/b20206f65b9b45d9a49accaf4d31e86a_1743326057932335748.webp" },
-                { id: 17, name: "Passion Frappe", nameKh: "ផាសសិនក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401855399/detail/c57c00e931424aa7947abb2e39b91b78_1743326058048819293.webp" },
-                { id: 18, name: "Coconut Frappe", nameKh: "ដូងក្រឡុក", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401753605/detail/396077381c8b43558553facbcdf72286_1743326058063252425.webp" },
-                { id: 19, name: "Strawberry Frappe", nameKh: "ស្ត្របឺរីក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401053436/detail/5b9c1bafada84b70afb2cffca88ab320_1743326058042938921.webp" },
-                { id: 20, name: "Matcha Frappe", nameKh: "ម៉ាត់ឆាក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185359765196/detail/62f16176507040d5a4051bce874ac90e_1743326057976521543.webp" }
-            ],
-            'MILK TEA': [
-                { id: 21, name: "Royal Milk Tea", nameKh: "តែទឹកដោះគោរ៉ូយ៉ាល់", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400829807/detail/3d0eb53d114b410eb3f2a2c6a342577b_1743326058078583691.webp" },
-                { id: 22, name: "Taro Milk", nameKh: "ត្រាវទឹកដោះគោ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405940563/detail/cd68cadf892544898a4d1d6a95b509d4_1743326058145277322.webp" },
-                { id: 23, name: "Milk Green Tea", nameKh: "តែបៃតងទឹកដោះគោ", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185402136970/detail/b9d904e4eec04a01abf7a9e5cd6787e5_1743326058085453833.webp" },
-                { id: 24, name: "Red Milk Tea", nameKh: "តែថៃទឹកដោះគោ", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400187186/detail/b0420ef3da034cf0b6de4a9d7ff6e3e4_1743326057982204968.webp" },
-                { id: 25, name: "Vanilla Milk Tea", nameKh: "តែវ៉ាន់នីឡាទឹកដោះគោ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185359876051/detail/e7a6ffc5639142a5bc10ae4a5ddc6f1e_1743326057945430031.webp" },
-                { id: 26, name: "Strawberry Milk Tea", nameKh: "តែស្ត្របឺរីទឹកដោះគោ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401216576/detail/f6a130b169864292bc910e8434471df1_1743326058039113241.webp" },
-                { id: 27, name: "Honey Milk Tea", nameKh: "តែទឹកឃ្មុំទឹកដោះគោ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400502448/detail/8413990edca149d0b4731e472daada7b_1743326057978493320.webp" },
-                { id: 28, name: "Cocao", nameKh: "កាកាវ", price: 3.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405270500/detail/610d853449d84ab385181ddb16396f51_1743326058132415260.webp" },
-                { id: 29, name: "Coffee Milk Tea", nameKh: "តែកាហ្វេទឹកដោះគោ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405624077/detail/06b03dc8326746578be6809c29801800_1743326058162845363.webp" },
-                { id: 30, name: "Coffee Mocha", nameKh: "កាហ្វេម៉ូកា", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400210346/detail/98bc89b6cead43d68aa8ee8d568e6702_1743326057925986955.webp" },
-                { id: 31, name: "Caramel Milk Tea", nameKh: "ការ៉ាម៉ែលទឹកដោះគោ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400829807/detail/3d0eb53d114b410eb3f2a2c6a342577b_1743326058078583691.webp" },
-                { id: 32, name: "Melons Milk Tea", nameKh: "មុីឡុងទឹកដោះគោ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209173772859/detail/menueditor_item_dce3c5daf36c4ee89b1f22f68d316b16_1757668609048069529.webp" }
-            ],
-            'OTHER': [
-                { id: 33, name: "Chocolate", nameKh: "សូកូឡា", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185359855137/detail/2b565e77d29b4563b5f828714e2e96f5_1743326057994156337.webp" },
-                { id: 34, name: "Strawberry Matcha", nameKh: "ស្រ្តបឺរីម៉ាត់ឆា", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400234373/detail/039291709e5f4329ac537eaa0e75b25b_1743326057969675134.webp" },
-                { id: 35, name: "Matcha Latte", nameKh: "ម៉ាត់ឆាឡាតេ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185359765196/detail/62f16176507040d5a4051bce874ac90e_1743326057976521543.webp" },
-                { id: 36, name: "Passion Milk", nameKh: "ផាសសិនទឹកដោះគោ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401879059/detail/ecc7e669dabd4c4fa3e3aa3634e9f2bb_1743326058059963640.webp" },
-                { id: 37, name: "Cacao Fresh Milk", nameKh: "កាកាវទឹកដោះគោស្រស់", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405270500/detail/610d853449d84ab385181ddb16396f51_1743326058132415260.webp" },
-                { id: 38, name: "Strawberry Fresh Milk", nameKh: "ស្រ្តបឺរីទឹកដោះគោស្រស់", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400234373/detail/039291709e5f4329ac537eaa0e75b25b_1743326057969675134.webp" },
-                { id: 39, name: "Royall Brown Sugar", nameKh: "ទឹកដោះគោស្រស់ស្ករត្នោត", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400829807/detail/3d0eb53d114b410eb3f2a2c6a342577b_1743326058078583691.webp" },
-                { id: 40, name: "Passion Fresh", nameKh: "ផាសសិនស្រស់", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400906956/detail/3b559284e076434baa554296221bd0af_1743326057996569531.webp" },
-                { id: 41, name: "Honey Lemon Tea", nameKh: "តែក្រូចឆ្មាទឹកឃ្មុំ", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401612711/detail/e9f219da794f4da98a4ce153184625f2_1743326058040387728.webp" },
-                { id: 42, name: "Ovaltine", nameKh: "អូវ៉ាន់ទីន", price: 3.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209155305200/detail/menueditor_item_1186800782b54644ab9b44c6cd5b904e_1757668358086873289.webp" },
-                { id: 44, name: "Nescafe", nameKh: "ណេសកាហ្វេ", price: 3.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401373335/detail/3750a0778b6f47fc8d887bb47ebcb6c7_1743326058114571174.webp" },
-                { id: 45, name: "Strawberry Tea", nameKh: "តែស្រ្តបឺរី", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209200023557/detail/menueditor_item_8ac3d0f8e4fa449a941d673bf9d0517a_1757668771983774712.webp" },
-                { id: 46, name: "Lychee Tea", nameKh: "តែគូលេន", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209190694798/detail/menueditor_item_55fb5878a19b4453991b5b68b7bde3c7_1757668699563770244.webp" },
-                { id: 47, name: "Melon Tea", nameKh: "តែមីឡូន", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209173772859/detail/menueditor_item_dce3c5daf36c4ee89b1f22f68d316b16_1757668609048069529.webp" }
-            ],
-            'SODA': [
-                { id: 48, name: "Strawberry Soda", nameKh: "ស្រ្តបឺរីសូដា", price: 3.75, image: "https://z-p3-scontent.fpnh18-3.fna.fbcdn.net/v/t39.30808-6/486288010_1112876617519234_5496247654139844088_n.jpg?stp=c194.0.1053.1053a_dst-jpg_s206x206_tt6&_nc_cat=101&ccb=1-7&_nc_sid=50ad20&_nc_eui2=AeFzMT5l8pJNbwkxvjHAFwrgJ1s3lyR1h3onWzeXJHWHeoytpedRUDutCgKLiTZRjj_0YU31Qn7eN3gbrHGmjEwx&_nc_ohc=OFtSXfRPBkUQ7kNvwFbwamG&_nc_oc=AdnLGqxH7ESdCwSPEpWDZUhuBjH3noESGp6p6jPEo6pC-Eoo9Bk123FUzK7qO23tX84&_nc_zt=23&_nc_ht=z-p3-scontent.fpnh18-3.fna&_nc_gid=FBg7f8AQS4u2bTTWEbGM0A&oh=00_AfZ68Y-fm5vlzpaX6DQez8dXfCSDMi-hB-fkA8NZs5QWEA&oe=68D4177A" },
-                { id: 49, name: "Passion Soda", nameKh: "ផាសសិនសូដា", price: 3.75, image: "https://z-p3-scontent.fpnh18-3.fna.fbcdn.net/v/t39.30808-6/485966615_1112876004185962_8218854233391420061_n.jpg?stp=c194.0.1053.1053a_dst-jpg_s206x206_tt6&_nc_cat=106&ccb=1-7&_nc_sid=50ad20&_nc_eui2=AeHLYRvHP1imUPSZ8V8RZYbvhYmVVv06-JeFiZVW_Tr4l6AZycCZpkrpZuRW_L3DwnPT6lDuVzInJgmeKGUuDM-R&_nc_ohc=aIWOj6lO3dIQ7kNvwHyOz4t&_nc_oc=AdmADOmnwiLlCgDUCnO1_TsqsV1t1Po4CV6jhkF5deDhDYGvKpEZFZw9qWL_c2c3l7Y&_nc_zt=23&_nc_ht=z-p3-scontent.fpnh18-3.fna&_nc_gid=FBg7f8AQS4u2bTTWEbGM0A&oh=00_Afbf3rUkXS88tkYW0aagoNww7xQcDAHzMNtMQldOV-TI2A&oe=68D408AC" },
-                { id: 50, name: "Bule Hawaii Soda", nameKh: "ប្លូហាវៃសូដា", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209382600762/detail/menueditor_item_61a275026c684d099ba3e6cdb0c31812_1757669883580949032.webp" },
-                { id: 51, name: "Lychee Soda", nameKh: "គូលេនសូដា", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209190694798/detail/menueditor_item_55fb5878a19b4453991b5b68b7bde3c7_1757668699563770244.webp" },
-                { id: 52, name: "Melon Soda", nameKh: "មីឡូនសូដា", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209173772859/detail/menueditor_item_dce3c5daf36c4ee89b1f22f68d316b16_1757668609048069529.webp" }
-            ]
+        // Load menu data from localStorage or use default
+        const loadMenuDataFromStorage = () => {
+            try {
+                const savedMenuData = localStorage.getItem('royalCafeMenuData');
+                if (savedMenuData) {
+                    return JSON.parse(savedMenuData);
+                }
+            } catch (error) {
+                console.error('Error loading menu data from storage:', error);
+            }
+            
+            // Return default menu data if nothing is saved
+            return {
+                'HOT SALES': [
+                    { id: 1, name: "Egg Coffee", nameKh: "កាហ្វេពងមាន់", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400870518/detail/3766b6f6eaba4891bebd9fde7141dac0_1743326057978577924.webp" },
+                    { id: 2, name: "Mocha", nameKh: "ម៉ូកា", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400210346/detail/98bc89b6cead43d68aa8ee8d568e6702_1743326057925986955.webp" },
+                    { id: 3, name: "Coffee Latte", nameKh: "កាហ្វេឡាតេ", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400132834/detail/61f42574637c43b5b43917866acf5c96_1743326058008760193.webp" },
+                    { id: 4, name: "Cappuccino", nameKh: "កាពូស៊ីណី", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401215610/detail/8fde6a9b8d7b408c9dd68a31a3e9f2f7_1743326058071300227.webp" },
+                    { id: 5, name: "Coconut Cream Latte", nameKh: "កាហ្វេដូងគ្រីម", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185404772720/detail/8802d46d398e4a4fa029bed3d7285d07_1743326058048061389.webp" },
+                    { id: 6, name: "Passion Cream", nameKh: "ផាសសិនគ្រីម", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401004116/detail/a9c41dfc878a430e970b392cc7a99313_1743326058107158839.webp" }
+                ],
+                'COFFEE': [
+                    { id: 7, name: "Ice Espresso", nameKh: "កាហ្វេទឹកដោះគោ", price: 3.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401373335/detail/3750a0778b6f47fc8d887bb47ebcb6c7_1743326058114571174.webp" },
+                    { id: 8, name: "Americano", nameKh: "កាហ្វេខ្មៅ", price: 3.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405444913/detail/c7259d977999409180313c4a4781bfbc_1743326058146738458.webp" },
+                    { id: 9, name: "Black Coffee Honey", nameKh: "កាហ្វេខ្មៅទឹកឃ្មុំ", price: 3.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405908813/detail/8190dc78882a4766994d6d95500f3586_1743326058132293382.webp" },
+                    { id: 10, name: "Vanilla Latte", nameKh: "វ៉ាន់នីឡា ឡាតេ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400228558/detail/8cfda4aeb8d34679a1e3d742bdeeeaba_1743326057976112967.webp" },
+                    { id: 11, name: "Caramel Latte", nameKh: "ការ៉ាមែលឡាតេ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400829807/detail/3d0eb53d114b410eb3f2a2c6a342577b_1743326058078583691.webp" },
+                    { id: 12, name: "Coconut Coffee", nameKh: "កាហ្វេដូងក្រអូប", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400228558/detail/8cfda4aeb8d34679a1e3d742bdeeeaba_1743326057976112967.webp" }
+                ],
+                'FRAPPE': [
+                    { id: 13, name: "Mocha Frappe", nameKh: "ម៉ូកាក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401043515/detail/d7286edd68a14244a8dffa550d3ac2f5_1743326058058727555.webp" },
+                    { id: 14, name: "Vanilla Latte Frappe", nameKh: "វ៉ាន់នីឡាក្រឡុក", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185403715221/detail/fbe160a73a144de58a267da820aee2c5_1743326058119121945.webp" },
+                    { id: 15, name: "Cappuccino Frappe", nameKh: "កាពូស៊ីណូក្រឡុក", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400610134/detail/ff9dd6f2b2714392877bef3bc7feced3_1743326057952816904.webp" },
+                    { id: 16, name: "Chocolate Frappe", nameKh: "សូកូឡាក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400269375/detail/b20206f65b9b45d9a49accaf4d31e86a_1743326057932335748.webp" },
+                    { id: 17, name: "Passion Frappe", nameKh: "ផាសសិនក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401855399/detail/c57c00e931424aa7947abb2e39b91b78_1743326058048819293.webp" },
+                    { id: 18, name: "Coconut Frappe", nameKh: "ដូងក្រឡុក", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401753605/detail/396077381c8b43558553facbcdf72286_1743326058063252425.webp" },
+                    { id: 19, name: "Strawberry Frappe", nameKh: "ស្ត្របឺរីក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401053436/detail/5b9c1bafada84b70afb2cffca88ab320_1743326058042938921.webp" },
+                    { id: 20, name: "Matcha Frappe", nameKh: "ម៉ាត់ឆាក្រឡុក", price: 4.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185359765196/detail/62f16176507040d5a4051bce874ac90e_1743326057976521543.webp" }
+                ],
+                'MILK TEA': [
+                    { id: 21, name: "Royal Milk Tea", nameKh: "តែទឹកដោះគោរ៉ូយ៉ាល់", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400829807/detail/3d0eb53d114b410eb3f2a2c6a342577b_1743326058078583691.webp" },
+                    { id: 22, name: "Taro Milk", nameKh: "ត្រាវទឹកដោះគោ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405940563/detail/cd68cadf892544898a4d1d6a95b509d4_1743326058145277322.webp" },
+                    { id: 23, name: "Milk Green Tea", nameKh: "តែបៃតងទឹកដោះគោ", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185402136970/detail/b9d904e4eec04a01abf7a9e5cd6787e5_1743326058085453833.webp" },
+                    { id: 24, name: "Red Milk Tea", nameKh: "តែថៃទឹកដោះគោ", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400187186/detail/b0420ef3da034cf0b6de4a9d7ff6e3e4_1743326057982204968.webp" },
+                    { id: 25, name: "Vanilla Milk Tea", nameKh: "តែវ៉ាន់នីឡាទឹកដោះគោ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185359876051/detail/e7a6ffc5639142a5bc10ae4a5ddc6f1e_1743326057945430031.webp" },
+                    { id: 26, name: "Strawberry Milk Tea", nameKh: "តែស្ត្របឺរីទឹកដោះគោ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401216576/detail/f6a130b169864292bc910e8434471df1_1743326058039113241.webp" },
+                    { id: 27, name: "Honey Milk Tea", nameKh: "តែទឹកឃ្មុំទឹកដោះគោ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400502448/detail/8413990edca149d0b4731e472daada7b_1743326057978493320.webp" },
+                    { id: 28, name: "Cocao", nameKh: "កាកាវ", price: 3.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405270500/detail/610d853449d84ab385181ddb16396f51_1743326058132415260.webp" },
+                    { id: 29, name: "Coffee Milk Tea", nameKh: "តែកាហ្វេទឹកដោះគោ", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405624077/detail/06b03dc8326746578be6809c29801800_1743326058162845363.webp" },
+                    { id: 30, name: "Coffee Mocha", nameKh: "កាហ្វេម៉ូកា", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400210346/detail/98bc89b6cead43d68aa8ee8d568e6702_1743326057925986955.webp" },
+                    { id: 31, name: "Caramel Milk Tea", nameKh: "ការ៉ាម៉ែលទឹកដោះគោ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400829807/detail/3d0eb53d114b410eb3f2a2c6a342577b_1743326058078583691.webp" },
+                    { id: 32, name: "Melons Milk Tea", nameKh: "មុីឡុងទឹកដោះគោ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209173772859/detail/menueditor_item_dce3c5daf36c4ee89b1f22f68d316b16_1757668609048069529.webp" }
+                ],
+                'OTHER': [
+                    { id: 33, name: "Chocolate", nameKh: "សូកូឡា", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185359855137/detail/2b565e77d29b4563b5f828714e2e96f5_1743326057994156337.webp" },
+                    { id: 34, name: "Strawberry Matcha", nameKh: "ស្រ្តបឺរីម៉ាត់ឆា", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400234373/detail/039291709e5f4329ac537eaa0e75b25b_1743326057969675134.webp" },
+                    { id: 35, name: "Matcha Latte", nameKh: "ម៉ាត់ឆាឡាតេ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185359765196/detail/62f16176507040d5a4051bce874ac90e_1743326057976521543.webp" },
+                    { id: 36, name: "Passion Milk", nameKh: "ផាសសិនទឹកដោះគោ", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401879059/detail/ecc7e669dabd4c4fa3e3aa3634e9f2bb_1743326058059963640.webp" },
+                    { id: 37, name: "Cacao Fresh Milk", nameKh: "កាកាវទឹកដោះគោស្រស់", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185405270500/detail/610d853449d84ab385181ddb16396f51_1743326058132415260.webp" },
+                    { id: 38, name: "Strawberry Fresh Milk", nameKh: "ស្រ្តបឺរីទឹកដោះគោស្រស់", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400234373/detail/039291709e5f4329ac537eaa0e75b25b_1743326057969675134.webp" },
+                    { id: 39, name: "Royall Brown Sugar", nameKh: "ទឹកដោះគោស្រស់ស្ករត្នោត", price: 4.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400829807/detail/3d0eb53d114b410eb3f2a2c6a342577b_1743326058078583691.webp" },
+                    { id: 40, name: "Passion Fresh", nameKh: "ផាសសិនស្រស់", price: 4.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400906956/detail/3b559284e076434baa554296221bd0af_1743326057996569531.webp" },
+                    { id: 41, name: "Honey Lemon Tea", nameKh: "តែក្រូចឆ្មាទឹកឃ្មុំ", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401612711/detail/e9f219da794f4da98a4ce153184625f2_1743326058040387728.webp" },
+                    { id: 42, name: "Ovaltine", nameKh: "អូវ៉ាន់ទីន", price: 3.50, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209155305200/detail/menueditor_item_1186800782b54644ab9b44c6cd5b904e_1757668358086873289.webp" },
+                    { id: 44, name: "Nescafe", nameKh: "ណេសកាហ្វេ", price: 3.25, image: "https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185401373335/detail/3750a0778b6f47fc8d887bb47ebcb6c7_1743326058114571174.webp" },
+                    { id: 45, name: "Strawberry Tea", nameKh: "តែស្រ្តបឺរី", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209200023557/detail/menueditor_item_8ac3d0f8e4fa449a941d673bf9d0517a_1757668771983774712.webp" },
+                    { id: 46, name: "Lychee Tea", nameKh: "តែគូលេន", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209190694798/detail/menueditor_item_55fb5878a19b4453991b5b68b7bde3c7_1757668699563770244.webp" },
+                    { id: 47, name: "Melon Tea", nameKh: "តែមីឡូន", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209173772859/detail/menueditor_item_dce3c5daf36c4ee89b1f22f68d316b16_1757668609048069529.webp" }
+                ],
+                'SODA': [
+                    { id: 48, name: "Strawberry Soda", nameKh: "ស្រ្តបឺរីសូដា", price: 3.75, image: "https://z-p3-scontent.fpnh18-3.fna.fbcdn.net/v/t39.30808-6/486288010_1112876617519234_5496247654139844088_n.jpg?stp=c194.0.1053.1053a_dst-jpg_s206x206_tt6&_nc_cat=101&ccb=1-7&_nc_sid=50ad20&_nc_eui2=AeFzMT5l8pJNbwkxvjHAFwrgJ1s3lyR1h3onWzeXJHWHeoytpedRUDutCgKLiTZRjj_0YU31Qn7eN3gbrHGmjEwx&_nc_ohc=OFtSXfRPBkUQ7kNvwFbwamG&_nc_oc=AdnLGqxH7ESdCwSPEpWDZUhuBjH3noESGp6p6jPEo6pC-Eoo9Bk123FUzK7qO23tX84&_nc_zt=23&_nc_ht=z-p3-scontent.fpnh18-3.fna&_nc_gid=FBg7f8AQS4u2bTTWEbGM0A&oh=00_AfZ68Y-fm5vlzpaX6DQez8dXfCSDMi-hB-fkA8NZs5QWEA&oe=68D4177A" },
+                    { id: 49, name: "Passion Soda", nameKh: "ផាសសិនសូដា", price: 3.75, image: "https://z-p3-scontent.fpnh18-3.fna.fbcdn.net/v/t39.30808-6/485966615_1112876004185962_8218854233391420061_n.jpg?stp=c194.0.1053.1053a_dst-jpg_s206x206_tt6&_nc_cat=106&ccb=1-7&_nc_sid=50ad20&_nc_eui2=AeHLYRvHP1imUPSZ8V8RZYbvhYmVVv06-JeFiZVW_Tr4l6AZycCZpkrpZuRW_L3DwnPT6lDuVzInJgmeKGUuDM-R&_nc_ohc=aIWOj6lO3dIQ7kNvwHyOz4t&_nc_oc=AdmADOmnwiLlCgDUCnO1_TsqsV1t1Po4CV6jhkF5deDhDYGvKpEZFZw9qWL_c2c3l7Y&_nc_zt=23&_nc_ht=z-p3-scontent.fpnh18-3.fna&_nc_gid=FBg7f8AQS4u2bTTWEbGM0A&oh=00_Afbf3rUkXS88tkYW0aagoNww7xQcDAHzMNtMQldOV-TI2A&oe=68D408AC" },
+                    { id: 50, name: "Bule Hawaii Soda", nameKh: "ប្លូហាវៃសូដា", price: 4.00, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209382600762/detail/menueditor_item_61a275026c684d099ba3e6cdb0c31812_1757669883580949032.webp" },
+                    { id: 51, name: "Lychee Soda", nameKh: "គូលេនសូដា", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209190694798/detail/menueditor_item_55fb5878a19b4453991b5b68b7bde3c7_1757668699563770244.webp" },
+                    { id: 52, name: "Melon Soda", nameKh: "មីឡូនសូដា", price: 3.75, image: "https://food-cms.grab.com/compressed_webp/items/KHITE2025091209173772859/detail/menueditor_item_dce3c5daf36c4ee89b1f22f68d316b16_1757668609048069529.webp" }
+                ]
+            };
         };
 
-        // Generate sample order history data - MODIFIED TO RETURN EMPTY ARRAY
-        const generateOrderHistory = () => {
-            return []; // Return empty array instead of generating sample data
+        // Save menu data to localStorage
+        const saveMenuDataToStorage = (menuData) => {
+            try {
+                localStorage.setItem('royalCafeMenuData', JSON.stringify(menuData));
+            } catch (error) {
+                console.error('Error saving menu data to storage:', error);
+            }
         };
 
-        const orderHistory = generateOrderHistory();
+        // Initialize menu data
+        let menuData = loadMenuDataFromStorage();
 
-        // Language translations
+        // Load orders from localStorage or initialize empty array
+        const loadOrdersFromStorage = () => {
+            try {
+                const savedOrders = localStorage.getItem('royalCafeOrders');
+                return savedOrders ? JSON.parse(savedOrders) : [];
+            } catch (error) {
+                console.error('Error loading orders from storage:', error);
+                return [];
+            }
+        };
+
         const translations = {
             en: {
                 pointOfSale: "Point of Sale",
@@ -1164,11 +2520,10 @@
                 monthlyReport: "Monthly Report",
                 selectDate: "Select Date",
                 selectMonth: "Select Month",
-                exportReport: "Export Report",
                 totalSales: "Total Sales",
                 totalOrders: "Total Orders",
                 averageOrder: "Average Order",
-                refundedOrders: "Refunded Orders",
+                productsSold: "Products Sold",
                 dailySalesReport: "Daily Sales Report",
                 monthlySalesReport: "Monthly Sales Report",
                 salesByCategory: "Sales by Category",
@@ -1186,12 +2541,79 @@
                 notes: "Notes",
                 showKhrPrices: "Show KHR",
                 showUsdPrices: "Show USD",
-                printerStatus: "Printer Status",
-                printerConnected: "Connected",
-                printerDisconnected: "Disconnected",
-                printerConnecting: "Connecting...",
-                printToTSP100: "Print to TSP100",
-                configurePrinter: "Configure Printer"
+                discount: "Discount",
+                applyDiscount: "Apply Discount",
+                removeDiscount: "Remove Discount",
+                discountAmount: "Discount Amount",
+                discountType: "Discount Type",
+                percentage: "Percentage",
+                fixedAmount: "Fixed Amount",
+                discountApplied: "Discount Applied",
+                enterDiscount: "Enter discount amount",
+                searchProducts: "Search products...",
+                searchResults: "Search results",
+                showingResultsFor: "Showing results for",
+                noResultsFound: "No products found",
+                clearSearch: "Clear search",
+                printerSettings: "Printer Settings",
+                printerIpAddress: "Printer IP Address",
+                printerPort: "Printer Port",
+                testPrinter: "Test Printer",
+                savePrinterSettings: "Save Printer Settings",
+                printerConfiguration: "Printer Configuration",
+                printerHelp: "Printer Setup Help",
+                printerHelpSteps: "To connect your Star TSP100III printer:",
+                printerStep1: "Connect your printer to the same Wi-Fi network as your iPad",
+                printerStep2: "Find your printer's IP address (print a test page from the printer)",
+                printerStep3: "Enter the IP address above (usually like 192.168.1.100)",
+                printerStep4: "Click 'Test Printer' to verify the connection",
+                printerStep5: "Save the settings and start printing!",
+                printerTestSuccess: "Printer connection successful!",
+                printerTestError: "Failed to connect to printer. Please check the IP address and network connection.",
+                printerSettingsSaved: "Printer settings saved successfully!",
+                configurePrinter: "Configure Printer",
+                clearHistory: "Clear History",
+                clearHistoryConfirm: "Are you sure you want to clear all order history? This cannot be undone.",
+                historyCleared: "Order history cleared successfully!",
+                exportToExcel: "Export to Excel",
+                exportDetailedExcel: "Export Detailed Excel",
+                excelExportSuccess: "Excel report exported successfully!",
+                excelExportError: "Error exporting to Excel. Please try again.",
+                noOrdersToExport: "No orders to export for the selected period.",
+                addProduct: "Add Product",
+                productName: "Product Name",
+                productNameKh: "Product Name (Khmer)",
+                productPrice: "Price ($)",
+                productCategory: "Category",
+                productImage: "Image URL",
+                addNewProduct: "Add New Product",
+                saveProduct: "Save Product",
+                editProduct: "Edit Product",
+                deleteProduct: "Delete Product",
+                productAdded: "Product added successfully!",
+                productUpdated: "Product updated successfully!",
+                productDeleted: "Product deleted successfully!",
+                manageProducts: "Manage Products",
+                currentProducts: "Current Products",
+                noProducts: "No products found",
+                fillAllFields: "Please fill in all required fields",
+                enterValidPrice: "Please enter a valid price",
+                confirmDelete: "Are you sure you want to delete this product?",
+                // New printing translations
+                printReceipt: "Print Receipt",
+                printingViaUSB: "Printing via USB...",
+                printingViaNetwork: "Printing via network...",
+                printingViaBrowser: "Printing via browser...",
+                usbPrintSuccess: "Receipt printed via USB!",
+                networkPrintSuccess: "Receipt sent to network printer!",
+                browserPrintSuccess: "Receipt ready for printing!",
+                printError: "Print error: ",
+                noPrinterSelected: "No printer selected",
+                grantUsbPermission: "Grant USB Permission",
+                usbPrinterSetup: "USB Printer Setup",
+                usbSetupInstructions: "Connect your Star TSP100III printer via USB cable and click below to grant permission.",
+                platformInfoIpad: "iPad detected: Use Network Printer in settings for best results",
+                platformInfoAndroid: "Android device: USB printing available. Connect your printer via USB cable."
             },
             km: {
                 pointOfSale: "ចំណុចលក់",
@@ -1230,19 +2652,18 @@
                 monthlyReport: "របាយការណ៍ប្រចាំខែ",
                 selectDate: "ជ្រើសរើសកាលបរិច្ឆេទ",
                 selectMonth: "ជ្រើសរើសខែ",
-                exportReport: "នាំចេញរបាយការណ៍",
                 totalSales: "ការលក់សរុប",
                 totalOrders: "ការកម្មង់សរុប",
-                averageOrder: "ការ�កម្មង់មធ្យម",
-                refundedOrders: "ការ�កម្មង់ដែលបានបង្វិលសង",
-                dailySalesReport: "របាយការណ៍ការ�លក់ប្រចាំថ្ងៃ",
-                monthlySalesReport: "របាយការណ៍ការ�លក់ប្រចាំខែ",
+                averageOrder: "ការកម្មង់មធ្យម",
+                productsSold: "ផលិតផលដែលបានលក់",
+                dailySalesReport: "របាយការណ៍ការលក់ប្រចាំថ្ងៃ",
+                monthlySalesReport: "របាយការណ៍ការលក់ប្រចាំខែ",
                 salesByCategory: "ការលក់តាមប្រភេទ",
                 orderDetails: "ព័ត៌មានលម្អិតអំពីការកម្មង់",
-                orderId: "លេខសម្គាល់ការ�កម្មង់",
+                orderId: "លេខសម្គាល់ការកម្មង់",
                 dateTime: "កាលបរិច្ឆេទ & ពេលវេលា",
                 status: "ស្ថានភាព",
-                noOrders: "មិនមានការ�កម្មង់",
+                noOrders: "មិនមានការកម្មង់",
                 royalTeaCafe: "Royal Tea&Cafe",
                 orderReceipt: "វិក្កយបត្រកម្មង់",
                 thankYou: "សូមអរគុណចំពោះការគ្រាំទ្រហាងរបស់យើងខ្ញុំ សូមអញ្ជើញមកម្ដេងទៀត!",
@@ -1252,165 +2673,83 @@
                 notes: "កំណត់ចំណាំ",
                 showKhrPrices: "បង្ហាញជារៀល",
                 showUsdPrices: "បង្ហាញជាដុល្លារ",
-                printerStatus: "ស្ថានភាពម៉ាស៊ីនបោះពុម្ព",
-                printerConnected: "បានតភ្ជាប់",
-                printerDisconnected: "មិនបានតភ្ជាប់",
-                printerConnecting: "កំពុងតភ្ជាប់...",
-                printToTSP100: "បោះពុម្ពទៅកាន់ TSP100",
-                configurePrinter: "កំណត់ម៉ាស៊ីនបោះពុម្ព"
+                discount: "បញ្ចុះតម្លៃ",
+                applyDiscount: "អនុវត្តបញ្ចុះតម្លៃ",
+                removeDiscount: "ដកបញ្ចុះតម្លៃ",
+                discountAmount: "ចំនួនបញ្ចុះតម្លៃ",
+                discountType: "ប្រភេទបញ្ចុះតម្លៃ",
+                percentage: "ភាគរយ",
+                fixedAmount: "ចំនួនថេរ",
+                discountApplied: "បញ្ចុះតម្លៃត្រូវបានអនុវត្ត",
+                enterDiscount: "បញ្ចូលចំនួនបញ្ចុះតម្លៃ",
+                searchProducts: "ស្វែងរកផលិតផល...",
+                searchResults: "លទ្ធផលស្វែងរក",
+                showingResultsFor: "បង្ហាញលទ្ធផលសម្រាប់",
+                noResultsFound: "មិនមានផលិតផល",
+                clearSearch: "លុបការស្វែងរក",
+                printerSettings: "ការកំណត់ម៉ាស៊ីនបោះពុម្ព",
+                printerIpAddress: "អាសយដ្ឋាន IP ម៉ាស៊ីនបោះពុម្ព",
+                printerPort: "ច្រកម៉ាស៊ីនបោះពុម្ព",
+                testPrinter: "សាកល្បងម៉ាស៊ីនបោះពុម្ព",
+                savePrinterSettings: "រក្សាទុកការកំណត់ម៉ាស៊ីនបោះពុម្ព",
+                printerConfiguration: "ការកំណត់ម៉ាស៊ីនបោះពុម្ព",
+                printerHelp: "ជំនួយការដំឡើងម៉ាស៊ីនបោះពុម្ព",
+                printerHelpSteps: "ដើម្បីតភ្ជាប់ម៉ាស៊ីនបោះពុម្ព Star TSP100III របស់អ្នក៖",
+                printerStep1: "តភ្ជាប់ម៉ាស៊ីនបោះពុម្ពរបស់អ្នកទៅបណ្តាញ Wi-Fi ដូចគ្នានឹង iPad របស់អ្នក",
+                printerStep2: "ស្វែងរកអាសយដ្ឋាន IP របស់ម៉ាស៊ីនបោះពុម្ព (បោះពុម្ពទំព័រសាកល្បងពីម៉ាស៊ីនបោះពុម្ព)",
+                printerStep3: "បញ្ចូលអាសយដ្ឋាន IP ខាងលើ (ជាទូទៅដូចជា 192.168.1.100)",
+                printerStep4: "ចុច 'សាកល្បងម៉ាស៊ីនបោះពុម្ព' ដើម្បីផ្ទៀងផ្ទាត់ការតភ្ជាប់",
+                printerStep5: "រក្សាទុកការកំណត់ និងចាប់ផ្តើមបោះពុម្ព!",
+                printerTestSuccess: "ការតភ្ជាប់ម៉ាស៊ីនបោះពុម្ពជោគជ័យ!",
+                printerTestError: "មិនអាចតភ្ជាប់ទៅម៉ាស៊ីនបោះពុម្ព។ សូមពិនិត្យមើលអាសយដ្ឋាន IP និងការតភ្ជាប់បណ្តាញ។",
+                printerSettingsSaved: "ការកំណត់ម៉ាស៊ីនបោះពុម្ពត្រូវបានរក្សាទុកដោយជោគជ័យ!",
+                configurePrinter: "កំណត់ម៉ាស៊ីនបោះពុម្ព",
+                clearHistory: "លុបប្រវត្តិ",
+                clearHistoryConfirm: "តើអ្នកប្រាកដថាចង់លុបប្រវត្តិការកម្មង់ទាំងអស់មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់ក្រោយបានទេ។",
+                historyCleared: "ប្រវត្តិការកម្មង់ត្រូវបានលុបដោយជោគជ័យ!",
+                exportToExcel: "នាំចេញទៅ Excel",
+                exportDetailedExcel: "នាំចេញ Excel លម្អិត",
+                excelExportSuccess: "របាយការណ៍ Excel ត្រូវបាននាំចេញដោយជោគជ័យ!",
+                excelExportError: "កំហុសក្នុងការនាំចេញទៅ Excel។ សូមព្យាយាមម្តងទៀត។",
+                noOrdersToExport: "មិនមានការកម្មង់ដើម្បីនាំចេញសម្រាប់រយៈពេលដែលបានជ្រើសរើស។",
+                addProduct: "បន្ថែមផលិតផល",
+                productName: "ឈ្មោះផលិតផល",
+                productNameKh: "ឈ្មោះផលិតផល (ខ្មែរ)",
+                productPrice: "តម្លៃ ($)",
+                productCategory: "ប្រភេទ",
+                productImage: "URL រូបភាព",
+                addNewProduct: "បន្ថែមផលិតផលថ្មី",
+                saveProduct: "រក្សាទុកផលិតផល",
+                editProduct: "កែសម្រួលផលិតផល",
+                deleteProduct: "លុបផលិតផល",
+                productAdded: "ផលិតផលត្រូវបានបន្ថែមដោយជោគជ័យ!",
+                productUpdated: "ផលិតផលត្រូវបានកែសម្រួលដោយជោគជ័យ!",
+                productDeleted: "ផលិតផលត្រូវបានលុបដោយជោគជ័យ!",
+                manageProducts: "គ្រប់គ្រងផលិតផល",
+                currentProducts: "ផលិតផលបច្ចុប្បន្ន",
+                noProducts: "មិនមានផលិតផល",
+                fillAllFields: "សូមបំពេញរាល់ព័ត៌មានដែលត្រូវការ",
+                enterValidPrice: "សូមបញ្ចូលតម្លៃដែលត្រឹមត្រូវ",
+                confirmDelete: "តើអ្នកប្រាកដថាចង់លុបផលិតផលនេះមែនទេ?",
+                // New printing translations
+                printReceipt: "បោះពុម្ពវិក្កយបត្រ",
+                printingViaUSB: "កំពុងបោះពុម្ពតាម USB...",
+                printingViaNetwork: "កំពុងបោះពុម្ពតាមបណ្តាញ...",
+                printingViaBrowser: "កំពុងបោះពុម្ពតាមកម្មវិធីរុករក...",
+                usbPrintSuccess: "វិក្កយបត្រត្រូវបានបោះពុម្ពតាម USB!",
+                networkPrintSuccess: "វិក្កយបត្រត្រូវបានផ្ញើទៅម៉ាស៊ីនបោះពុម្ពបណ្តាញ!",
+                browserPrintSuccess: "វិក្កយបត្រត្រៀមរួចរាល់សម្រាប់ការបោះពុម្ព!",
+                printError: "កំហុសក្នុងការបោះពុម្ព៖ ",
+                noPrinterSelected: "មិនមានម៉ាស៊ីនបោះពុម្ពត្រូវបានជ្រើសរើស",
+                grantUsbPermission: "ផ្តល់ការអនុញ្ញាត USB",
+                usbPrinterSetup: "ការដំឡើងម៉ាស៊ីនបោះពុម្ព USB",
+                usbSetupInstructions: "តភ្ជាប់ម៉ាស៊ីនបោះពុម្ព Star TSP100III របស់អ្នកតាមរយៈ cable USB ហើយចុចខាងក្រោមដើម្បីផ្តល់ការអនុញ្ញាត។",
+                platformInfoIpad: "iPad ត្រូវបានរកឃើញ៖ ប្រើម៉ាស៊ីនបោះពុម្ពបណ្តាញនៅក្នុងការកំណត់សម្រាប់លទ្ធផលល្អបំផុត",
+                platformInfoAndroid: "ឧបករណ៍ Android៖ ការបោះពុម្ព USB មាន។ តភ្ជាប់ម៉ាស៊ីនបោះពុម្ពរបស់អ្នកតាមរយៈ cable USB។"
             }
         };
 
-        // TSP100 Printer Functions
-        const TSP100Printer = {
-            isConnected: false,
-            isConnecting: false,
-            interfaceType: 'unknown',
-            printer: null,
-            
-            // Initialize the printer
-            init: async function() {
-                try {
-                    this.isConnecting = true;
-                    
-                    // Check if Star Web Print is available
-                    if (typeof star === 'undefined' || !star.websdk) {
-                        console.error('Star Web Print SDK not loaded');
-                        this.isConnecting = false;
-                        return false;
-                    }
-                    
-                    // Create a new printer instance
-                    this.printer = new star.websdk.Printer();
-                    
-                    // Try to detect printers
-                    const printers = await this.printer.getPrinters();
-                    
-                    if (printers && printers.length > 0) {
-                        // Try to find a TSP100 printer
-                        const tsp100Printer = printers.find(p => 
-                            p.model.includes('TSP100') || 
-                            p.model.includes('TSP-100') ||
-                            p.model.includes('TSP143') ||
-                            p.model.includes('TSP143III')
-                        );
-                        
-                        if (tsp100Printer) {
-                            await this.printer.setPrinter(tsp100Printer);
-                            this.isConnected = true;
-                            this.interfaceType = tsp100Printer.connectionType;
-                            console.log('TSP100 printer connected:', tsp100Printer);
-                        } else {
-                            // Use the first available printer if no TSP100 is found
-                            await this.printer.setPrinter(printers[0]);
-                            this.isConnected = true;
-                            this.interfaceType = printers[0].connectionType;
-                            console.log('Using available printer:', printers[0]);
-                        }
-                    } else {
-                        console.warn('No printers found');
-                        this.isConnected = false;
-                    }
-                    
-                    this.isConnecting = false;
-                    return this.isConnected;
-                } catch (error) {
-                    console.error('Error initializing printer:', error);
-                    this.isConnected = false;
-                    this.isConnecting = false;
-                    return false;
-                }
-            },
-            
-            // Print receipt
-            printReceipt: async function(receiptData, language) {
-                if (!this.isConnected || !this.printer) {
-                    alert(language === 'en' 
-                        ? 'Printer is not connected. Please check the connection.' 
-                        : 'ម៉ាស៊ីនបោះពុម្ពមិនបានតភ្ជាប់។ សូមពិនិត្យមើលការតភ្ជាប់។');
-                    return false;
-                }
-                
-                try {
-                    // Create receipt builder
-                    const builder = new star.websdk.PrintBuilder();
-                    
-                    // Add receipt content
-                    builder
-                        .styleAlignment(star.websdk.Alignment.Center)
-                        .styleBold(true)
-                        .styleInvert(true)
-                        .actionPrintText("ROYAL TEA & CAFE\n")
-                        .actionPrintText("----------------------------\n")
-                        .styleBold(false)
-                        .styleInvert(false)
-                        .actionPrintText(`Order #: ${receiptData.orderNumber}\n`)
-                        .actionPrintText(`Date: ${new Date().toLocaleDateString()}\n`)
-                        .actionPrintText(`Time: ${new Date().toLocaleTimeString()}\n`)
-                        .actionPrintText("----------------------------\n")
-                        .styleAlignment(star.websdk.Alignment.Left);
-                    
-                    // Add items
-                    receiptData.items.forEach(item => {
-                        const name = language === 'en' ? item.name : item.nameKh;
-                        const itemTotal = (item.price + (item.topping ? item.topping.price : 0)) * item.quantity;
-                        
-                        builder
-                            .actionPrintText(`${item.quantity}x ${name}\n`);
-                            
-                        if (item.sugarLevel) {
-                            const sugarText = language === 'en' 
-                                ? `  Sugar: ${item.sugarLevel}\n` 
-                                : `  ស្ករ: ${item.sugarLevel}\n`;
-                            builder.actionPrintText(sugarText);
-                        }
-                        
-                        if (item.topping) {
-                            const toppingName = language === 'en' 
-                                ? item.topping.name 
-                                : item.topping.nameKh;
-                            const toppingText = language === 'en'
-                                ? `  Topping: ${toppingName} (+$${item.topping.price.toFixed(2)})\n`
-                                : `  គុជ: ${toppingName} (+$${item.topping.price.toFixed(2)})\n`;
-                            builder.actionPrintText(toppingText);
-                        }
-                        
-                        builder.actionPrintText(`  $${itemTotal.toFixed(2)}\n`);
-                    });
-                    
-                    // Add totals
-                    builder
-                        .actionPrintText("----------------------------\n")
-                        .actionPrintText(`${language === 'en' ? 'Subtotal' : 'សរុបរង'}: $${receiptData.subtotal.toFixed(2)}\n`)
-                        .actionPrintText(`${language === 'en' ? 'Total' : 'សរុប'}: $${receiptData.total.toFixed(2)}\n`)
-                        .actionPrintText("----------------------------\n")
-                        .styleAlignment(star.websdk.Alignment.Center)
-                        .actionPrintText(language === 'en' 
-                            ? "Thank you for your visit!\nPlease come again\n" 
-                            : "សូមអរគុណចំពោះការគ្រាំទ្រហាងរបស់យើងខ្ញុំ!\nសូមអញ្ជើញមកម្ដេងទៀត\n")
-                        .actionPrintText("\n\n\n"); // Add paper cut space
-                    
-                    // Print the receipt
-                    await this.printer.print(builder.commands);
-                    
-                    console.log('Receipt printed successfully');
-                    return true;
-                } catch (error) {
-                    console.error('Error printing receipt:', error);
-                    alert(language === 'en' 
-                        ? 'Error printing receipt. Please try again.' 
-                        : 'កំហុសក្នុងការបោះពុម្ពវិក័យប័ត្រ។ សូមព្យាយាមម្តងទៀត។');
-                    return false;
-                }
-            },
-            
-            // Get printer status
-            getStatus: function() {
-                if (this.isConnecting) return 'connecting';
-                return this.isConnected ? 'connected' : 'disconnected';
-            }
-        };
-
+        // ImageSlider Component
         const ImageSlider = () => {
             const [currentSlide, setCurrentSlide] = useState(0);
             
@@ -1452,6 +2791,7 @@
             );
         };
 
+        // CustomizationModal Component
         const CustomizationModal = ({ item, onConfirm, onCancel, language, showKhrPrices }) => {
             const [selectedSugar, setSelectedSugar] = useState('100%');
             const [selectedTopping, setSelectedTopping] = useState(null);
@@ -1527,7 +2867,8 @@
             );
         };
 
-        const ReceiptModal = ({ cart, notes, orderNumber, onClose, onPrint, language, showKhrPrices, onPrintTSP100 }) => {
+        // ReceiptModal Component
+        const ReceiptModal = ({ cart, notes, orderNumber, onClose, onPrint, language, showKhrPrices, discount }) => {
             const t = translations[language];
             
             const getSubtotal = () => {
@@ -1540,8 +2881,20 @@
                 }, 0);
             };
 
+            const getDiscountAmount = () => {
+                if (!discount || !discount.amount) return 0;
+                
+                if (discount.type === 'percentage') {
+                    return getSubtotal() * (discount.amount / 100);
+                } else {
+                    return discount.amount;
+                }
+            };
+
             const getTotal = () => {
-                return getSubtotal();
+                const subtotal = getSubtotal();
+                const discountAmount = getDiscountAmount();
+                return Math.max(0, subtotal - discountAmount);
             };
 
             return (
@@ -1565,7 +2918,7 @@
                                         <div key={`${item.id}-${item.sugarLevel}-${item.topping?.id}`} className="receipt-item">
                                             <div className="receipt-item-details">
                                                 <div>
-                                                    <strong>{item.quantity}x</strong> {item.name}
+                                                    <strong>{item.quantity}x</strong> {language === 'en' ? item.name : item.nameKh}
                                                 </div>
                                                 {item.sugarLevel && (
                                                     <div className="receipt-sugar">{t.sugarLevel}: {item.sugarLevel}</div>
@@ -1595,6 +2948,21 @@
                                         )}
                                     </div>
                                 </div>
+                                
+                                {discount && discount.amount > 0 && (
+                                    <div className="receipt-total-row discount-row">
+                                        <div>{t.discount}: 
+                                            {discount.type === 'percentage' ? ` (${discount.amount}%)` : ''}
+                                        </div>
+                                        <div className="receipt-item-price">
+                                            <span className="usd-price">-${getDiscountAmount().toFixed(2)}</span>
+                                            {showKhrPrices && (
+                                                <div className="khmer-price-receipt">-{formatKhrPrice(usdToKhr(getDiscountAmount()))}</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                
                                 <div className="receipt-total-row total-final">
                                     <div>{t.total}:</div>
                                     <div className="receipt-item-price">
@@ -1622,9 +2990,6 @@
                             <button className="print-btn" onClick={onPrint}>
                                 <i className="fas fa-print"></i> {t.print}
                             </button>
-                            <button className="print-btn" onClick={onPrintTSP100}>
-                                <i className="fas fa-receipt"></i> {t.printToTSP100}
-                            </button>
                             <button className="close-btn" onClick={onClose}>
                                 <i className="fas fa-times"></i> {t.close}
                             </button>
@@ -1634,7 +2999,407 @@
             );
         };
 
-        const CafeDashboard = () => {
+        // PrinterConfigModal Component
+        const PrinterConfigModal = ({ onClose, onSave, language, currentSettings }) => {
+            const [ipAddress, setIpAddress] = useState(currentSettings?.ipAddress || '');
+            const [port, setPort] = useState(currentSettings?.port || '80');
+            const [testStatus, setTestStatus] = useState(null);
+            
+            const t = translations[language];
+            
+            const handleTest = async () => {
+                if (!ipAddress) {
+                    setTestStatus({ success: false, message: 'Please enter IP address' });
+                    return;
+                }
+                
+                setTestStatus({ success: null, message: 'Testing connection...' });
+                
+                // Simulate printer test
+                setTimeout(() => {
+                    if (ipAddress.includes('192.168') || ipAddress.includes('10.0') || ipAddress.includes('172.')) {
+                        setTestStatus({ success: true, message: t.printerTestSuccess });
+                    } else {
+                        setTestStatus({ success: false, message: t.printerTestError });
+                    }
+                }, 1500);
+            };
+            
+            const handleSave = () => {
+                onSave({ ipAddress, port });
+            };
+            
+            return (
+                <div className="modal-overlay">
+                    <div className="printer-config-modal">
+                        <div className="customization-modal-header">
+                            <h3>{t.printerConfiguration}</h3>
+                        </div>
+                        
+                        <div className="printer-config-section">
+                            <div className="printer-config-title">{t.printerIpAddress}</div>
+                            <input
+                                type="text"
+                                className="printer-input"
+                                placeholder="192.168.1.100"
+                                value={ipAddress}
+                                onChange={(e) => setIpAddress(e.target.value)}
+                            />
+                            
+                            <div className="printer-config-title">{t.printerPort}</div>
+                            <input
+                                type="text"
+                                className="printer-input"
+                                placeholder="80"
+                                value={port}
+                                onChange={(e) => setPort(e.target.value)}
+                            />
+                            
+                            <button className="printer-test-btn" onClick={handleTest}>
+                                {t.testPrinter}
+                            </button>
+                            
+                            {testStatus && (
+                                <div className={`printer-status ${testStatus.success ? 'success' : 'error'}`}>
+                                    {testStatus.message}
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="printer-help">
+                            <h4>{t.printerHelp}</h4>
+                            <ol>
+                                <li>{t.printerStep1}</li>
+                                <li>{t.printerStep2}</li>
+                                <li>{t.printerStep3}</li>
+                                <li>{t.printerStep4}</li>
+                                <li>{t.printerStep5}</li>
+                            </ol>
+                        </div>
+                        
+                        <div className="modal-buttons">
+                            <button className="modal-btn cancel-btn" onClick={onClose}>
+                                {language === 'en' ? 'Cancel' : 'បោះបង់'}
+                            </button>
+                            <button className="modal-btn confirm-btn" onClick={handleSave}>
+                                {t.savePrinterSettings}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ProductManagerModal Component
+        const ProductManagerModal = ({ onClose, language, onProductsUpdate, user }) => {
+            const [newProduct, setNewProduct] = useState({
+                name: '',
+                nameKh: '',
+                price: '',
+                category: 'HOT SALES',
+                image: ''
+            });
+            const [editingProduct, setEditingProduct] = useState(null);
+            
+            const t = translations[language];
+            const categories = ['HOT SALES', 'COFFEE', 'FRAPPE', 'MILK TEA', 'OTHER', 'SODA'];
+
+            const handleAddProduct = () => {
+                if (!newProduct.name || !newProduct.nameKh || !newProduct.price || !newProduct.category) {
+                    alert(t.fillAllFields);
+                    return;
+                }
+
+                const price = parseFloat(newProduct.price);
+                if (isNaN(price) || price <= 0) {
+                    alert(t.enterValidPrice);
+                    return;
+                }
+
+                // Generate a new ID (find the highest current ID and add 1)
+                const allProducts = Object.values(menuData).flat();
+                const maxId = Math.max(...allProducts.map(p => p.id), 0);
+                const newId = maxId + 1;
+
+                const productToAdd = {
+                    id: newId,
+                    name: newProduct.name,
+                    nameKh: newProduct.nameKh,
+                    price: price,
+                    category: newProduct.category,
+                    image: newProduct.image || 'https://food-cms.grab.com/compressed_webp/items/KHITEA20250329185400870518/detail/3766b6f6eaba4891bebd9fde7141dac0_1743326057978577924.webp'
+                };
+
+                // Add to menuData
+                if (!menuData[newProduct.category]) {
+                    menuData[newProduct.category] = [];
+                }
+                menuData[newProduct.category].push(productToAdd);
+
+                // Save to localStorage
+                saveMenuDataToStorage(menuData);
+
+                // Notify parent component
+                onProductsUpdate();
+
+                // Reset form
+                setNewProduct({
+                    name: '',
+                    nameKh: '',
+                    price: '',
+                    category: 'HOT SALES',
+                    image: ''
+                });
+
+                alert(t.productAdded);
+            };
+
+            const handleEditProduct = (product) => {
+                setEditingProduct(product);
+                setNewProduct({
+                    name: product.name,
+                    nameKh: product.nameKh,
+                    price: product.price.toString(),
+                    category: product.category,
+                    image: product.image
+                });
+            };
+
+            const handleUpdateProduct = () => {
+                if (!newProduct.name || !newProduct.nameKh || !newProduct.price || !newProduct.category) {
+                    alert(t.fillAllFields);
+                    return;
+                }
+
+                const price = parseFloat(newProduct.price);
+                if (isNaN(price) || price <= 0) {
+                    alert(t.enterValidPrice);
+                    return;
+                }
+
+                // Find and update the product
+                let productFound = false;
+                Object.keys(menuData).forEach(category => {
+                    menuData[category] = menuData[category].map(product => {
+                        if (product.id === editingProduct.id) {
+                            productFound = true;
+                            return {
+                                ...product,
+                                name: newProduct.name,
+                                nameKh: newProduct.nameKh,
+                                price: price,
+                                category: newProduct.category,
+                                image: newProduct.image || product.image
+                            };
+                        }
+                        return product;
+                    });
+                });
+
+                if (productFound) {
+                    // Save to localStorage
+                    saveMenuDataToStorage(menuData);
+
+                    // Notify parent component
+                    onProductsUpdate();
+
+                    // Reset form
+                    setNewProduct({
+                        name: '',
+                        nameKh: '',
+                        price: '',
+                        category: 'HOT SALES',
+                        image: ''
+                    });
+                    setEditingProduct(null);
+
+                    alert(t.productUpdated);
+                }
+            };
+
+            const handleDeleteProduct = (product) => {
+                if (window.confirm(t.confirmDelete)) {
+                    // Remove product from menuData
+                    Object.keys(menuData).forEach(category => {
+                        menuData[category] = menuData[category].filter(p => p.id !== product.id);
+                    });
+
+                    // Save to localStorage
+                    saveMenuDataToStorage(menuData);
+
+                    // Notify parent component
+                    onProductsUpdate();
+
+                    alert(t.productDeleted);
+                }
+            };
+
+            const cancelEdit = () => {
+                setEditingProduct(null);
+                setNewProduct({
+                    name: '',
+                    nameKh: '',
+                    price: '',
+                    category: 'HOT SALES',
+                    image: ''
+                });
+            };
+
+            const getAllProducts = () => {
+                return Object.values(menuData).flat();
+            };
+
+            const getCategoryName = (category, language) => {
+                const categoryMap = {
+                    'HOT SALES': language === 'en' ? 'HOT SALES' : 'លក់ដាច់',
+                    'COFFEE': language === 'en' ? 'COFFEE' : 'កាហ្វេ',
+                    'FRAPPE': language === 'en' ? 'FRAPPE' : 'ក្រឡុក',
+                    'MILK TEA': language === 'en' ? 'MILK TEA' : 'តែទឹកដោះគោ',
+                    'OTHER': language === 'en' ? 'OTHER' : 'ផ្សេងៗ',
+                    'SODA': language === 'en' ? 'SODA' : 'សូដា'
+                };
+                return categoryMap[category] || category;
+            };
+
+            return (
+                <div className="modal-overlay">
+                    <div className="product-manager-modal">
+                        <div className="customization-modal-header">
+                            <h3>{t.manageProducts}</h3>
+                        </div>
+                        
+                        <div className="product-form">
+                            <h4>{editingProduct ? t.editProduct : t.addNewProduct}</h4>
+                            
+                            <div className="form-group">
+                                <label>{t.productName} *</label>
+                                <input
+                                    type="text"
+                                    value={newProduct.name}
+                                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                                    placeholder={language === 'en' ? 'Enter product name' : 'បញ្ចូលឈ្មោះផលិតផល'}
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>{t.productNameKh} *</label>
+                                <input
+                                    type="text"
+                                    value={newProduct.nameKh}
+                                    onChange={(e) => setNewProduct({...newProduct, nameKh: e.target.value})}
+                                    placeholder={language === 'en' ? 'Enter product name in Khmer' : 'បញ្ចូលឈ្មោះផលិតផលជាភាសាខ្មែរ'}
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>{t.productPrice} *</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={newProduct.price}
+                                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                                    placeholder={language === 'en' ? 'Enter price in USD' : 'បញ្ចូលតម្លៃជាដុល្លារ'}
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>{t.productCategory} *</label>
+                                <select
+                                    value={newProduct.category}
+                                    onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                                >
+                                    {categories.map(category => (
+                                        <option key={category} value={category}>
+                                            {getCategoryName(category, language)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>{t.productImage}</label>
+                                <input
+                                    type="text"
+                                    value={newProduct.image}
+                                    onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
+                                    placeholder={language === 'en' ? 'Enter image URL (optional)' : 'បញ្ចូល URL រូបភាព (ស្រេចចិត្ត)'}
+                                />
+                            </div>
+                            
+                            <div className="form-actions">
+                                {editingProduct ? (
+                                    <>
+                                        <button className="cancel-btn" onClick={cancelEdit}>
+                                            {t.cancel}
+                                        </button>
+                                        <button className="save-btn" onClick={handleUpdateProduct}>
+                                            {t.saveProduct}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button className="save-btn" onClick={handleAddProduct}>
+                                        {t.addProduct}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="product-list">
+                            <h4>{t.currentProducts}</h4>
+                            {getAllProducts().length === 0 ? (
+                                <p>{t.noProducts}</p>
+                            ) : (
+                                getAllProducts().map(product => (
+                                    <div key={product.id} className="product-item">
+                                        <div className="product-info">
+                                            <h4>{language === 'en' ? product.name : product.nameKh}</h4>
+                                            <p>{getCategoryName(product.category, language)} - ${product.price.toFixed(2)}</p>
+                                        </div>
+                                        <div className="product-actions">
+                                            <button 
+                                                className="edit-btn"
+                                                onClick={() => handleEditProduct(product)}
+                                            >
+                                                <i className="fas fa-edit"></i>
+                                            </button>
+                                            <button 
+                                                className="delete-btn"
+                                                onClick={() => handleDeleteProduct(product)}
+                                            >
+                                                <i className="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        
+                        <div className="modal-buttons">
+                            <button className="modal-btn cancel-btn" onClick={onClose}>
+                                {t.close}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Helper function to get category name in current language
+        const getCategoryName = (category, language) => {
+            const categoryMap = {
+                'HOT SALES': language === 'en' ? 'HOT SALES' : 'លក់ដាច់',
+                'COFFEE': language === 'en' ? 'COFFEE' : 'កាហ្វេ',
+                'FRAPPE': language === 'en' ? 'FRAPPE' : 'ក្រឡុក',
+                'MILK TEA': language === 'en' ? 'MILK TEA' : 'តែទឹកដោះគោ',
+                'OTHER': language === 'en' ? 'OTHER' : 'ផ្សេងៗ',
+                'SODA': language === 'en' ? 'SODA' : 'សូដា'
+            };
+            return categoryMap[category] || category;
+        };
+
+        // Main CafeDashboard Component
+        const CafeDashboard = ({ user }) => {
             const [activeTab, setActiveTab] = useState('pos');
             const [activeCategory, setActiveCategory] = useState('HOT SALES');
             const [cart, setCart] = useState([]);
@@ -1643,7 +3408,13 @@
             const [reportType, setReportType] = useState('daily');
             const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
             const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7));
-            const [orders, setOrders] = useState(orderHistory);
+            const [showProductManager, setShowProductManager] = useState(false);
+            
+            // Load orders from localStorage on component mount
+            const [orders, setOrders] = useState(() => {
+                return loadOrdersFromStorage();
+            });
+            
             const [showReceipt, setShowReceipt] = useState(false);
             const [showCustomizationModal, setShowCustomizationModal] = useState(false);
             const [selectedItem, setSelectedItem] = useState(null);
@@ -1651,59 +3422,427 @@
             const [language, setLanguage] = useState('en');
             const [showKhrPrices, setShowKhrPrices] = useState(false);
             const [lastResetDate, setLastResetDate] = useState(localStorage.getItem('lastResetDate') || new Date().toLocaleDateString());
-            const [printerStatus, setPrinterStatus] = useState('disconnected');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [searchResults, setSearchResults] = useState([]);
+            const [isSearching, setIsSearching] = useState(false);
+            const [discount, setDiscount] = useState(null);
+            const [discountAmount, setDiscountAmount] = useState('');
+            const [discountType, setDiscountType] = useState('percentage');
+            const [printerSettings, setPrinterSettings] = useState(() => {
+                const saved = localStorage.getItem('printerSettings');
+                return saved ? JSON.parse(saved) : { ipAddress: '', port: '80' };
+            });
+            const [showPrinterConfig, setShowPrinterConfig] = useState(false);
+            const [printStatus, setPrintStatus] = useState(null);
+            const [showPrintStatus, setShowPrintStatus] = useState(false);
+            const [platformInfoHidden, setPlatformInfoHidden] = useState(false);
+            
+            // Detect platform
+            const platform = detectPlatform();
             
             const dailySalesChartRef = useRef(null);
             const categorySalesChartRef = useRef(null);
             
             const t = translations[language];
             
-            // Initialize printer on component mount
+            // Save orders to localStorage whenever orders change
             useEffect(() => {
-                const initializePrinter = async () => {
-                    setPrinterStatus('connecting');
-                    const connected = await TSP100Printer.init();
-                    setPrinterStatus(connected ? 'connected' : 'disconnected');
-                };
+                try {
+                    localStorage.setItem('royalCafeOrders', JSON.stringify(orders));
+                } catch (error) {
+                    console.error('Error saving orders to storage:', error);
+                }
+            }, [orders]);
+            
+            // Show platform info banner on first load
+            useEffect(() => {
+                if (platform.isMobile && !localStorage.getItem('platformInfoHidden')) {
+                    setPlatformInfoHidden(false);
+                }
+            }, [platform.isMobile]);
+            
+            // Hide platform info banner
+            const hidePlatformInfo = () => {
+                setPlatformInfoHidden(true);
+                localStorage.setItem('platformInfoHidden', 'true');
+            };
+            
+            // Test USB permission (Android only)
+            const testUsbPermission = async () => {
+                if (!platform.supportsWebUSB || platform.isIOS) {
+                    setPrintStatus({ 
+                        success: false, 
+                        message: language === 'en' 
+                            ? 'USB printing not supported on this device' 
+                            : 'ការបោះពុម្ព USB មិនត្រូវបានគាំទ្រនៅលើឧបករណ៍នេះទេ' 
+                    });
+                    setShowPrintStatus(true);
+                    return;
+                }
                 
-                initializePrinter();
-            }, []);
-            
-            // Update printer status display
-            useEffect(() => {
-                setPrinterStatus(TSP100Printer.getStatus());
-            }, [TSP100Printer.isConnected, TSP100Printer.isConnecting]);
-            
-            // Check if we need to reset the order number for a new day
-            useEffect(() => {
-                const checkDayChange = () => {
-                    const today = new Date().toLocaleDateString();
-                    const storedDate = localStorage.getItem('lastResetDate');
+                try {
+                    // Just request permission without printing
+                    await navigator.usb.requestDevice({ 
+                        filters: [{ vendorId: 0x0519 }] 
+                    });
                     
-                    // If it's a new day, reset the order number to 1
-                    if (storedDate !== today) {
-                        localStorage.setItem('lastResetDate', today);
-                        setLastResetDate(today);
-                        setOrderNumber(1);
-                        // Also reset the last order number in localStorage
-                        localStorage.setItem('lastOrderNumber', '1');
-                    } else {
-                        // If it's the same day, get the last order number from localStorage
-                        const lastOrderNum = parseInt(localStorage.getItem('lastOrderNumber') || '1');
-                        setOrderNumber(lastOrderNum);
-                    }
+                    setPrintStatus({ 
+                        success: true, 
+                        message: language === 'en' 
+                            ? 'USB permission granted! Now connect your printer and try printing a receipt.' 
+                            : 'ការអនុញ្ញាត USB ត្រូវបានផ្តល់ឱ្យ! ឥឡូវនេះតភ្ជាប់ម៉ាស៊ីនបោះពុម្ពរបស់អ្នក ហើយព្យាយាមបោះពុម្ពវិក្កយបត្រ។' 
+                    });
+                    setShowPrintStatus(true);
+                } catch (error) {
+                    setPrintStatus({ 
+                        success: false, 
+                        message: language === 'en' 
+                            ? 'USB permission cancelled or no printer found' 
+                            : 'ការអនុញ្ញាត USB ត្រូវបានបោះបង់ ឬមិនមានម៉ាស៊ីនបោះពុម្ពត្រូវបានរកឃើញ' 
+                    });
+                    setShowPrintStatus(true);
+                }
+            };
+            
+            // UPDATED PRINT FUNCTION - Now supports USB, Network, and Browser printing
+            const printReceipt = async () => {
+                if (!lastOrder) return;
+                
+                const receiptData = {
+                    orderNumber: lastOrder.id,
+                    items: lastOrder.items,
+                    subtotal: lastOrder.subtotal,
+                    discount: getDiscountAmount(),
+                    total: lastOrder.total,
+                    date: new Date().toLocaleDateString(),
+                    time: new Date().toLocaleTimeString(),
+                    cashier: user.displayName,
+                    notes: notes
                 };
                 
-                // Check on component mount
-                checkDayChange();
+                // Show printing status
+                setPrintStatus({ success: null, message: t.printingViaBrowser });
+                setShowPrintStatus(true);
                 
-                // Set up interval to check for day changes every minute
-                const intervalId = setInterval(checkDayChange, 60000);
+                let result;
                 
-                return () => clearInterval(intervalId);
-            }, []);
+                // Try WebUSB first (Android Chrome)
+                if (platform.supportsWebUSB) {
+                    setPrintStatus({ success: null, message: t.printingViaUSB });
+                    result = await printViaWebUSB(receiptData, language);
+                    
+                    if (result.success) {
+                        setPrintStatus({ success: true, message: t.usbPrintSuccess });
+                        setTimeout(() => setShowPrintStatus(false), 2000);
+                        return;
+                    }
+                }
+                
+                // Try network printing
+                if (printerSettings.ipAddress) {
+                    setPrintStatus({ success: null, message: t.printingViaNetwork });
+                    result = await printViaNetwork(receiptData, language, printerSettings);
+                    
+                    if (result.success) {
+                        setPrintStatus({ success: true, message: t.networkPrintSuccess });
+                        setTimeout(() => setShowPrintStatus(false), 2000);
+                        return;
+                    }
+                }
+                
+                // Fallback to browser print
+                setPrintStatus({ success: null, message: t.printingViaBrowser });
+                
+                setTimeout(() => {
+                    window.print();
+                    setPrintStatus({ success: true, message: t.browserPrintSuccess });
+                    setTimeout(() => setShowPrintStatus(false), 2000);
+                }, 1000);
+            };
             
-            // Filter orders based on report type and date selection
+            // Retry printing
+            const retryPrint = async () => {
+                setShowPrintStatus(false);
+                setTimeout(() => printReceipt(), 500);
+            };
+            
+            // Fallback to browser print
+            const fallbackToBrowserPrint = () => {
+                setShowPrintStatus(false);
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+            };
+            
+            // Close print status
+            const closePrintStatus = () => {
+                setShowPrintStatus(false);
+            };
+            
+            // Rest of your existing functions
+            const handleSearch = (query) => {
+                setSearchQuery(query);
+            };
+            
+            const clearSearch = () => {
+                setSearchQuery('');
+                setSearchResults([]);
+                setIsSearching(false);
+            };
+            
+            const getProductsToDisplay = () => {
+                if (isSearching && searchQuery.trim() !== '') {
+                    return searchResults;
+                }
+                return menuData[activeCategory] || [];
+            };
+            
+            const applyDiscount = () => {
+                if (!discountAmount || isNaN(discountAmount) || parseFloat(discountAmount) <= 0) {
+                    alert(language === 'en' ? 'Please enter a valid discount amount' : 'សូមបញ្ចូលចំនួនបញ្ចុះតម្លៃដែលត្រឹមត្រូវ');
+                    return;
+                }
+                
+                const amount = parseFloat(discountAmount);
+                
+                if (discountType === 'percentage' && (amount < 0 || amount > 100)) {
+                    alert(language === 'en' ? 'Percentage discount must be between 0% and 100%' : 'បញ្ចុះតម្លៃភាគរយត្រូវតែពី 0% ដល់ 100%');
+                    return;
+                }
+                
+                setDiscount({
+                    amount: amount,
+                    type: discountType
+                });
+                
+                setDiscountAmount('');
+            };
+
+            const removeDiscount = () => {
+                setDiscount(null);
+                setDiscountAmount('');
+            };
+
+            const getSubtotal = () => {
+                return cart.reduce((total, item) => {
+                    let itemTotal = item.price * item.quantity;
+                    if (item.topping) {
+                        itemTotal += item.topping.price * item.quantity;
+                    }
+                    return total + itemTotal;
+                }, 0);
+            };
+
+            const getDiscountAmount = () => {
+                if (!discount || !discount.amount) return 0;
+                
+                if (discount.type === 'percentage') {
+                    return getSubtotal() * (discount.amount / 100);
+                } else {
+                    return discount.amount;
+                }
+            };
+
+            const getTotal = () => {
+                const subtotal = getSubtotal();
+                const discountAmount = getDiscountAmount();
+                return Math.max(0, subtotal - discountAmount);
+            };
+
+            const exportToExcel = () => {
+                const filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.date);
+                    
+                    if (reportType === 'daily') {
+                        return orderDate.toISOString().split('T')[0] === selectedDate;
+                    } else {
+                        return orderDate.toISOString().substring(0, 7) === selectedMonth;
+                    }
+                });
+                
+                if (filteredOrders.length === 0) {
+                    alert(language === 'en' 
+                        ? "No orders to export for the selected period." 
+                        : "មិនមានការកម្មង់ដើម្បីនាំចេញសម្រាប់រយៈពេលដែលបានជ្រើសរើស។");
+                    return;
+                }
+
+                try {
+                    // Prepare data for Excel
+                    const excelData = [];
+                    
+                    // Add header row
+                    const headers = [
+                        t.orderId,
+                        t.dateTime,
+                        language === 'en' ? 'Items Count' : 'ចំនួនធាតុ',
+                        t.subtotal,
+                        t.discount,
+                        t.total,
+                        t.status
+                    ];
+                    excelData.push(headers);
+                    
+                    // Add data rows
+                    filteredOrders.forEach(order => {
+                        const itemsCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
+                        const discountAmount = order.discount ? 
+                            (order.discount.type === 'percentage' 
+                                ? `${order.discount.amount}%` 
+                                : `$${order.discount.amount.toFixed(2)}`)
+                            : '$0.00';
+                        
+                        const row = [
+                            order.id,
+                            new Date(order.date).toLocaleString(),
+                            itemsCount,
+                            `$${order.subtotal.toFixed(2)}`,
+                            discountAmount,
+                            `$${order.total.toFixed(2)}`,
+                            order.status
+                        ];
+                        excelData.push(row);
+                    });
+                    
+                    // Create worksheet
+                    const ws = XLSX.utils.aoa_to_sheet(excelData);
+                    
+                    // Create workbook
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Sales Report');
+                    
+                    // Generate filename with date
+                    const reportDate = reportType === 'daily' 
+                        ? selectedDate 
+                        : selectedMonth;
+                    const filename = `Royal_Cafe_Sales_Report_${reportDate}.xlsx`;
+                    
+                    // Export to Excel
+                    XLSX.writeFile(wb, filename);
+                    
+                    // Show success message
+                    setPrintStatus({ 
+                        success: true, 
+                        message: language === 'en' 
+                            ? 'Excel report exported successfully!' 
+                            : 'របាយការណ៍ Excel ត្រូវបាននាំចេញដោយជោគជ័យ!'
+                    });
+                    
+                    setTimeout(() => setPrintStatus(null), 3000);
+                    
+                } catch (error) {
+                    console.error('Error exporting to Excel:', error);
+                    setPrintStatus({ 
+                        success: false, 
+                        message: language === 'en' 
+                            ? 'Error exporting to Excel. Please try again.' 
+                            : 'កំហុសក្នុងការនាំចេញទៅ Excel។ សូមព្យាយាមម្តងទៀត។'
+                    });
+                    
+                    setTimeout(() => setPrintStatus(null), 3000);
+                }
+            };
+
+            const exportDetailedExcel = () => {
+                const filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.date);
+                    
+                    if (reportType === 'daily') {
+                        return orderDate.toISOString().split('T')[0] === selectedDate;
+                    } else {
+                        return orderDate.toISOString().substring(0, 7) === selectedMonth;
+                    }
+                });
+                
+                if (filteredOrders.length === 0) {
+                    alert(language === 'en' 
+                        ? "No orders to export for the selected period." 
+                        : "មិនមានការកម្មង់ដើម្បីនាំចេញសម្រាប់រយៈពេលដែលបានជ្រើសរើស។");
+                    return;
+                }
+
+                try {
+                    // Prepare detailed data for Excel
+                    const detailedData = [];
+                    
+                    // Add header row for detailed report
+                    const detailedHeaders = [
+                        t.orderId,
+                        t.dateTime,
+                        language === 'en' ? 'Item Name' : 'ឈ្មោះធាតុ',
+                        language === 'en' ? 'Item Name (KH)' : 'ឈ្មោះធាតុ (EN)',
+                        language === 'en' ? 'Quantity' : 'ចំនួន',
+                        language === 'en' ? 'Sugar Level' : 'កម្រិតស្ករ',
+                        language === 'en' ? 'Topping' : 'គុជ',
+                        language === 'en' ? 'Unit Price' : 'តម្លៃឯកតា',
+                        language === 'en' ? 'Item Total' : 'សរុបធាតុ',
+                        t.status
+                    ];
+                    detailedData.push(detailedHeaders);
+                    
+                    // Add detailed data rows
+                    filteredOrders.forEach(order => {
+                        order.items.forEach(item => {
+                            const itemTotal = (item.price + (item.topping ? item.topping.price : 0)) * item.quantity;
+                            const toppingName = item.topping 
+                                ? (language === 'en' ? item.topping.name : item.topping.nameKh)
+                                : '';
+                            
+                            const row = [
+                                order.id,
+                                new Date(order.date).toLocaleString(),
+                                item.name,
+                                item.nameKh,
+                                item.quantity,
+                                item.sugarLevel || '',
+                                toppingName,
+                                `$${(item.price + (item.topping ? item.topping.price : 0)).toFixed(2)}`,
+                                `$${itemTotal.toFixed(2)}`,
+                                order.status
+                            ];
+                            detailedData.push(row);
+                        });
+                    });
+                    
+                    // Create worksheet
+                    const ws = XLSX.utils.aoa_to_sheet(detailedData);
+                    
+                    // Create workbook
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Detailed Sales Report');
+                    
+                    // Generate filename with date
+                    const reportDate = reportType === 'daily' 
+                        ? selectedDate 
+                        : selectedMonth;
+                    const filename = `Royal_Cafe_Detailed_Report_${reportDate}.xlsx`;
+                    
+                    // Export to Excel
+                    XLSX.writeFile(wb, filename);
+                    
+                    // Show success message
+                    setPrintStatus({ 
+                        success: true, 
+                        message: language === 'en' 
+                            ? 'Detailed Excel report exported successfully!' 
+                            : 'របាយការណ៍ Excel លម្អិតត្រូវបាននាំចេញដោយជោគជ័យ!'
+                    });
+                    
+                    setTimeout(() => setPrintStatus(null), 3000);
+                    
+                } catch (error) {
+                    console.error('Error exporting detailed Excel:', error);
+                    setPrintStatus({ 
+                        success: false, 
+                        message: language === 'en' 
+                            ? 'Error exporting detailed report. Please try again.' 
+                            : 'កំហុសក្នុងការនាំចេញរបាយការណ៍លម្អិត។ សូមព្យាយាមម្តងទៀត។'
+                    });
+                    
+                    setTimeout(() => setPrintStatus(null), 3000);
+                }
+            };
+
             const filteredOrders = orders.filter(order => {
                 const orderDate = new Date(order.date);
                 
@@ -1714,27 +3853,27 @@
                 }
             });
             
-            // Calculate report statistics
             const calculateStats = () => {
                 const totalSales = filteredOrders.reduce((sum, order) => sum + order.total, 0);
                 const totalOrders = filteredOrders.length;
                 const averageOrder = totalOrders > 0 ? totalSales / totalOrders : 0;
-                const refundedOrders = filteredOrders.filter(order => order.status === 'Refunded').length;
+                
+                const totalProductsSold = filteredOrders.reduce((sum, order) => {
+                    return sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0);
+                }, 0);
                 
                 return {
                     totalSales: totalSales.toFixed(2),
                     totalOrders,
                     averageOrder: averageOrder.toFixed(2),
-                    refundedOrders
+                    totalProductsSold
                 };
             };
             
             const stats = calculateStats();
             
-            // Prepare data for charts
             const prepareChartData = () => {
                 if (reportType === 'daily') {
-                    // For daily report, show sales by hour
                     const hours = Array.from({length: 24}, (_, i) => i);
                     const salesByHour = hours.map(hour => {
                         return filteredOrders
@@ -1748,7 +3887,6 @@
                         label: 'Sales by Hour'
                     };
                 } else {
-                    // For monthly report, show sales by day
                     const daysInMonth = new Date(
                         parseInt(selectedMonth.split('-')[0]),
                         parseInt(selectedMonth.split('-')[1]),
@@ -1773,13 +3911,11 @@
             
             const chartData = prepareChartData();
             
-            // Prepare category sales data
             const prepareCategoryData = () => {
                 const categorySales = {};
                 
                 filteredOrders.forEach(order => {
                     order.items.forEach(item => {
-                        // Find which category this item belongs to
                         for (const category of Object.keys(menuData)) {
                             if (menuData[category].some(menuItem => menuItem.id === item.id)) {
                                 categorySales[category] = (categorySales[category] || 0) + (item.price * item.quantity);
@@ -1800,11 +3936,9 @@
             
             const categoryData = prepareCategoryData();
             
-            // Initialize charts
             useEffect(() => {
                 if (activeTab !== 'reports') return;
                 
-                // Destroy existing charts if they exist
                 if (dailySalesChartRef.current) {
                     dailySalesChartRef.current.destroy();
                 }
@@ -1812,72 +3946,75 @@
                     categorySalesChartRef.current.destroy();
                 }
                 
-                // Create sales chart
-                const salesCtx = document.getElementById('salesChart').getContext('2d');
-                dailySalesChartRef.current = new Chart(salesCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: chartData.labels,
-                        datasets: [{
-                            label: chartData.label,
-                            data: chartData.data,
-                            backgroundColor: 'rgba(219, 39, 119, 0.5)',
-                            borderColor: 'rgba(219, 39, 119, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: language === 'en' ? 'Sales ($)' : 'ការលក់ ($)'
+                const salesCtx = document.getElementById('salesChart');
+                const categoryCtx = document.getElementById('categoryChart');
+                
+                if (salesCtx) {
+                    dailySalesChartRef.current = new Chart(salesCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: chartData.labels,
+                            datasets: [{
+                                label: chartData.label,
+                                data: chartData.data,
+                                backgroundColor: 'rgba(219, 39, 119, 0.5)',
+                                borderColor: 'rgba(219, 39, 119, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: language === 'en' ? 'Sales ($)' : 'ការលក់ ($)'
+                                    }
                                 }
                             }
                         }
-                    }
-                });
+                    });
+                }
                 
-                // Create category chart
-                const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-                categorySalesChartRef.current = new Chart(categoryCtx, {
-                    type: 'pie',
-                    data: {
-                        labels: categoryData.labels.map(label => {
-                            const categoryTranslations = {
-                                'HOT SALES': language === 'en' ? 'Hot Sales' : 'លក់ដាច់',
-                                'COFFEE': language === 'en' ? 'Coffee' : 'កាហ្វេ',
-                                'FRAPPE': language === 'en' ? 'Frappe' : 'ក្រឡុក',
-                                'MILK TEA': language === 'en' ? 'Milk Tea' : 'តែទឹកដោះគោ',
-                                'OTHER': language === 'en' ? 'Other' : 'ផ្សេងៗ',
-                                'SODA': language === 'en' ? 'Soda' : 'សូដា'
-                            };
-                            return categoryTranslations[label] || label;
-                        }),
-                        datasets: [{
-                            data: categoryData.data,
-                            backgroundColor: [
-                                'rgba(219, 39, 119, 0.8)',
-                                'rgba(156, 39, 176, 0.8)',
-                                'rgba(63, 81, 181, 0.8)',
-                                'rgba(33, 150, 243, 0.8)',
-                                'rgba(3, 169, 244, 0.8)',
-                                'rgba(0, 188, 212, 0.8)'
-                            ],
-                            borderWidth: 1
+                if (categoryCtx) {
+                    categorySalesChartRef.current = new Chart(categoryCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: categoryData.labels.map(label => {
+                                const categoryTranslations = {
+                                    'HOT SALES': language === 'en' ? 'Hot Sales' : 'លក់ដាច់',
+                                    'COFFEE': language === 'en' ? 'Coffee' : 'កាហ្វេ',
+                                    'FRAPPE': language === 'en' ? 'Frappe' : 'ក្រឡុក',
+                                    'MILK TEA': language === 'en' ? 'Milk Tea' : 'តែទឹកដោះគោ',
+                                    'OTHER': language === 'en' ? 'Other' : 'ផ្សេងៗ',
+                                    'SODA': language === 'en' ? 'Soda' : 'សូដា'
+                                };
+                                return categoryTranslations[label] || label;
+                            }),
+                            datasets: [{
+                                data: categoryData.data,
+                                backgroundColor: [
+                                    'rgba(219, 39, 119, 0.8)',
+                                    'rgba(156, 39, 176, 0.8)',
+                                    'rgba(63, 81, 181, 0.8)',
+                                    'rgba(33, 150, 243, 0.8)',
+                                    'rgba(3, 169, 244, 0.8)',
+                                    'rgba(0, 188, 212, 0.8)'
+                                ],
+                                borderWidth: 1
                         }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'right'
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'right'
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                }
                 
                 return () => {
                     if (dailySalesChartRef.current) {
@@ -1887,10 +4024,9 @@
                         categorySalesChartRef.current.destroy();
                     }
                 };
-            }, [activeTab, reportType, selectedDate, selectedMonth, language]);
+            }, [activeTab, reportType, selectedDate, selectedMonth, language, filteredOrders]);
             
             const addToCart = (item) => {
-                // Show customization modal for drinks
                 setSelectedItem(item);
                 setShowCustomizationModal(true);
             };
@@ -1902,7 +4038,6 @@
                     topping
                 };
                 
-                // Create a unique identifier for this item with its customizations
                 const itemKey = `${selectedItem.id}-${sugarLevel}-${topping?.id || 'no-topping'}`;
                 
                 const existingItem = cart.find(cartItem => 
@@ -1943,70 +4078,75 @@
                 ));
             };
 
-            const getSubtotal = () => {
-                return cart.reduce((total, item) => {
-                    let itemTotal = item.price * item.quantity;
-                    if (item.topping) {
-                        itemTotal += item.topping.price * item.quantity;
-                    }
-                    return total + itemTotal;
-                }, 0);
+            const handleSavePrinterSettings = (settings) => {
+                setPrinterSettings(settings);
+                localStorage.setItem('printerSettings', JSON.stringify(settings));
+                setShowPrinterConfig(false);
+                setPrintStatus({ 
+                    success: true, 
+                    message: translations[language].printerSettingsSaved 
+                });
+                
+                setTimeout(() => setPrintStatus(null), 3000);
             };
 
-            const getTotal = () => {
-                return getSubtotal();
+            const clearOrderHistory = () => {
+                if (window.confirm(t.clearHistoryConfirm)) {
+                    setOrders([]);
+                    setPrintStatus({ 
+                        success: true, 
+                        message: t.historyCleared 
+                    });
+                    setTimeout(() => setPrintStatus(null), 3000);
+                }
             };
 
-            const processPayment = () => {
+            const handleProductsUpdate = () => {
+                // Force re-render by updating state
+                setOrders([...orders]);
+            };
+
+            const processPayment = async () => {
                 if (cart.length === 0) {
                     alert(language === 'en' ? "Cart is empty. Please add items before payment." : "រទេះទទេ។ សូមបន្ថែមធាតុមុនពេលបង់ប្រាក់។");
                     return;
                 }
                 
-                // Add to order history
                 const newOrder = {
                     id: orderNumber,
                     date: new Date().toISOString(),
                     items: [...cart],
+                    subtotal: getSubtotal(),
+                    discount: discount,
                     total: getTotal(),
-                    status: 'Completed'
+                    status: 'Completed',
+                    cashier: user.displayName
                 };
                 
-                setOrders([...orders, newOrder]);
+                // Update orders state - this will trigger the localStorage save
+                setOrders(prevOrders => [...prevOrders, newOrder]);
                 setLastOrder(newOrder);
                 
-                // Increment order number and save to localStorage
                 const nextOrderNumber = orderNumber + 1;
                 setOrderNumber(nextOrderNumber);
                 localStorage.setItem('lastOrderNumber', nextOrderNumber.toString());
                 
                 setShowReceipt(true);
+                
+                setPrintStatus({ success: null, message: 'Processing payment...' });
+                
+                setTimeout(() => {
+                    setPrintStatus({ 
+                        success: true, 
+                        message: 'Payment processed successfully!' 
+                    });
+                }, 1000);
+                
+                setTimeout(() => setPrintStatus(null), 5000);
+                
                 setCart([]);
                 setNotes('');
-            };
-
-            const printReceipt = () => {
-                window.print();
-            };
-
-            const printToTSP100 = async () => {
-                if (!lastOrder) return;
-                
-                const receiptData = {
-                    orderNumber: lastOrder.id,
-                    items: lastOrder.items,
-                    subtotal: getSubtotal(),
-                    total: getTotal(),
-                    notes: notes
-                };
-                
-                const success = await TSP100Printer.printReceipt(receiptData, language);
-                
-                if (success) {
-                    alert(language === 'en' 
-                        ? 'Receipt sent to TSP100 printer successfully!' 
-                        : 'បានបញ្ជូនវិក័យប័ត្រទៅកាន់ម៉ាស៊ីនបោះពុម្ព TSP100 ដោយជោគជ័យ!');
-                }
+                setDiscount(null);
             };
 
             const closeReceipt = () => {
@@ -2019,22 +4159,6 @@
 
             const togglePriceDisplay = () => {
                 setShowKhrPrices(prev => !prev);
-            };
-
-            const reconfigurePrinter = async () => {
-                setPrinterStatus('connecting');
-                const connected = await TSP100Printer.init();
-                setPrinterStatus(connected ? 'connected' : 'disconnected');
-                
-                if (connected) {
-                    alert(language === 'en' 
-                        ? 'Printer configured successfully!' 
-                        : 'បានកំណត់ម៉ាស៊ីនបោះពុម្ពដោយជោគជ័យ!');
-                } else {
-                    alert(language === 'en' 
-                        ? 'Failed to connect to printer. Please make sure it is connected and try again.' 
-                        : 'មិនអាចតភ្ជាប់ទៅកាន់ម៉ាស៊ីនបោះពុម្ព។ សូមធ្វើឱ្យប្រាកដថាវាត្រូវបានតភ្ជាប់ហើយព្យាយាមម្តងទៀត។');
-                }
             };
 
             const getCategoryName = (category) => {
@@ -2056,7 +4180,7 @@
                             <i className="fas fa-crown"></i>
                             Royal Tea&Cafe
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div className="header-controls">
                             <div className="language-toggle" onClick={toggleLanguage}>
                                 <span className="language-flag">{language === 'en' ? '🇺🇸' : '🇰🇭'}</span>
                                 <span>{language === 'en' ? 'EN' : 'KH'}</span>
@@ -2065,20 +4189,57 @@
                                 <i className={`fas ${showKhrPrices ? 'fa-dollar-sign' : 'fa-money-bill'}`}></i>
                                 <span>{showKhrPrices ? t.showUsdPrices : t.showKhrPrices}</span>
                             </div>
-                            <div className="printer-status" onClick={reconfigurePrinter} title={t.configurePrinter}>
-                                <i className={`fas fa-receipt ${printerStatus === 'connected' ? 'printer-connected' : printerStatus === 'connecting' ? 'printer-connecting' : 'printer-disconnected'}`}></i>
-                                <span>{t.printerStatus}: </span>
-                                <span className={printerStatus === 'connected' ? 'printer-connected' : printerStatus === 'connecting' ? 'printer-connecting' : 'printer-disconnected'}>
-                                    {printerStatus === 'connected' ? t.printerConnected : 
-                                     printerStatus === 'connecting' ? t.printerConnecting : t.printerDisconnected}
-                                </span>
-                            </div>
+                            {user.role === 'admin' && (
+                                <button 
+                                    className="add-product-btn"
+                                    onClick={() => setShowProductManager(true)}
+                                >
+                                    <i className="fas fa-plus"></i>
+                                    <span>{t.addProduct}</span>
+                                </button>
+                            )}
+                            <button 
+                                className="printer-config-btn"
+                                onClick={() => setShowPrinterConfig(true)}
+                            >
+                                <i className="fas fa-print"></i>
+                                <span>{t.configurePrinter}</span>
+                            </button>
                             <div className="user-info">
-                                <div className="avatar">KL</div>
-                                <span>kimrong Leng</span>
+                                <div className="avatar">{user.displayName.charAt(0)}</div>
+                                <span>
+                                    {user.displayName} 
+                                    <span className={`user-role-badge ${user.role}`}>
+                                        {user.role}
+                                    </span>
+                                </span>
                             </div>
                         </div>
                     </header>
+                    
+                    {/* Platform Info Banner */}
+                    {!platformInfoHidden && (
+                        <PlatformInfoBanner 
+                            platform={platform} 
+                            language={language}
+                            onHide={hidePlatformInfo}
+                        />
+                    )}
+                    
+                    {/* Global Status */}
+                    {printStatus && !showPrintStatus && (
+                        <div className={`global-status ${printStatus.success === null ? 'info' : printStatus.success ? 'success' : 'error'}`}>
+                            {printStatus.message}
+                        </div>
+                    )}
+                    
+                    {/* USB Permission Request (Android only) */}
+                    {platform.supportsWebUSB && !platform.isIOS && (
+                        <USBPermissionRequest 
+                            onRequest={testUsbPermission}
+                            language={language}
+                        />
+                    )}
                     
                     <div className="nav-tabs">
                         <div 
@@ -2087,12 +4248,14 @@
                         >
                             <i className="fas fa-cash-register"></i> {t.pointOfSale}
                         </div>
-                        <div 
-                            className={`nav-tab ${activeTab === 'reports' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('reports')}
-                        >
-                            <i className="fas fa-chart-line"></i> {t.reports}
-                        </div>
+                        {user.role === 'admin' && (
+                            <div 
+                                className={`nav-tab ${activeTab === 'reports' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('reports')}
+                            >
+                                <i className="fas fa-chart-line"></i> {t.reports}
+                            </div>
+                        )}
                     </div>
                     
                     {activeTab === 'pos' ? (
@@ -2106,25 +4269,76 @@
                                         <div>{t.order} #{orderNumber}</div>
                                     </div>
                                     
-                                    <div className="categories">
-                                        {Object.keys(menuData).map(category => (
-                                            <button
-                                                key={category}
-                                                className={`category-btn ${activeCategory === category ? 'active' : ''}`}
-                                                onClick={() => setActiveCategory(category)}
-                                            >
-                                                {getCategoryName(category)}
-                                            </button>
-                                        ))}
+                                    <div className="search-container">
+                                        <div style={{position: 'relative'}}>
+                                            <input
+                                                type="text"
+                                                className="search-input"
+                                                placeholder={t.searchProducts}
+                                                value={searchQuery}
+                                                onChange={(e) => handleSearch(e.target.value)}
+                                            />
+                                            <div className="search-icon">
+                                                <i className="fas fa-search"></i>
+                                            </div>
+                                            {searchQuery && (
+                                                <button 
+                                                    onClick={clearSearch}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        right: '40px',
+                                                        top: '50%',
+                                                        transform: 'translateY(-50%)',
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: '#db2777',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                        {searchQuery && (
+                                            <div className="search-results-info">
+                                                {searchResults.length > 0 ? (
+                                                    <span>
+                                                        {t.showingResultsFor}: "<strong>{searchQuery}</strong>" 
+                                                        ({searchResults.length} {language === 'en' ? 'products found' : 'ផលិតផលត្រូវបានរកឃើញ'})
+                                                    </span>
+                                                ) : (
+                                                    <span>{t.noResultsFound}: "<strong>{searchQuery}</strong>"</span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
+                                    
+                                    {!searchQuery && (
+                                        <div className="categories">
+                                            {Object.keys(menuData).map(category => (
+                                                <button
+                                                    key={category}
+                                                    className={`category-btn ${activeCategory === category ? 'active' : ''}`}
+                                                    onClick={() => setActiveCategory(category)}
+                                                >
+                                                    {getCategoryName(category)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                     
                                     <div className="menu-container">
                                         <div className="menu-grid">
-                                            {menuData[activeCategory].map(item => (
+                                            {getProductsToDisplay().map(item => (
                                                 <div key={item.id} className="menu-item" onClick={() => addToCart(item)}>
                                                     <img src={item.image} alt={item.name} className="menu-item-image" />
                                                     <h3>{language === 'en' ? item.name : item.nameKh}</h3>
                                                     <small>{language === 'en' ? item.nameKh : item.name}</small>
+                                                    {item.category && searchQuery && (
+                                                        <small style={{color: '#db2777', fontWeight: 'bold'}}>
+                                                            {getCategoryName(item.category)}
+                                                        </small>
+                                                    )}
                                                     <p>
                                                         <span className="usd-price">${item.price.toFixed(2)}</span>
                                                         {showKhrPrices && (
@@ -2134,6 +4348,19 @@
                                                 </div>
                                             ))}
                                         </div>
+                                        {searchQuery && searchResults.length === 0 && (
+                                            <div className="empty-cart">
+                                                <i className="fas fa-search"></i>
+                                                <p>{t.noResultsFound}</p>
+                                                <button 
+                                                    className="category-btn" 
+                                                    onClick={clearSearch}
+                                                    style={{marginTop: '10px'}}
+                                                >
+                                                    {t.clearSearch}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 
@@ -2184,6 +4411,42 @@
                                         )}
                                     </div>
                                     
+                                    <div className="discount-section">
+                                        <h3>{t.discount}</h3>
+                                        <div className="discount-controls">
+                                            <input
+                                                type="number"
+                                                className="discount-input"
+                                                placeholder={t.enterDiscount}
+                                                value={discountAmount}
+                                                onChange={(e) => setDiscountAmount(e.target.value)}
+                                                min="0"
+                                                step={discountType === 'percentage' ? "1" : "0.01"}
+                                            />
+                                            <select 
+                                                className="discount-type"
+                                                value={discountType}
+                                                onChange={(e) => setDiscountType(e.target.value)}
+                                            >
+                                                <option value="percentage">%</option>
+                                                <option value="fixed">$</option>
+                                            </select>
+                                        </div>
+                                        <div className="discount-buttons">
+                                            <button className="apply-discount-btn" onClick={applyDiscount}>
+                                                {t.applyDiscount}
+                                            </button>
+                                            <button className="remove-discount-btn" onClick={removeDiscount}>
+                                                {t.removeDiscount}
+                                            </button>
+                                        </div>
+                                        {discount && (
+                                            <div className="discount-applied">
+                                                {t.discountApplied}: {discount.amount}{discount.type === 'percentage' ? '%' : '$'}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
                                     <div className="cart-totals">
                                         <div className="total-row">
                                             <span>{t.subtotal}</span>
@@ -2194,6 +4457,21 @@
                                                 )}
                                             </span>
                                         </div>
+                                        
+                                        {discount && discount.amount > 0 && (
+                                            <div className="total-row discount-row">
+                                                <span>{t.discount}: 
+                                                    {discount.type === 'percentage' ? ` (${discount.amount}%)` : ''}
+                                                </span>
+                                                <span className="cart-item-price">
+                                                    <span className="usd-price">-${getDiscountAmount().toFixed(2)}</span>
+                                                    {showKhrPrices && (
+                                                        <div className="khmer-price">-{formatKhrPrice(usdToKhr(getDiscountAmount()))}</div>
+                                                    )}
+                                                </span>
+                                        </div>
+                                        )}
+                                        
                                         <div className="total-row total-final">
                                             <span>{t.total}</span>
                                             <span className="cart-item-price">
@@ -2256,9 +4534,17 @@
                                     </div>
                                 )}
                                 
-                                <button className="report-btn">
-                                    <i className="fas fa-download"></i> {t.exportReport}
-                                </button>
+                                <div className="report-buttons">
+                                    <button className="excel-export-btn" onClick={exportToExcel}>
+                                        <i className="fas fa-file-excel"></i> {t.exportToExcel}
+                                    </button>
+                                    <button className="excel-export-btn detailed" onClick={exportDetailedExcel}>
+                                        <i className="fas fa-file-excel"></i> {t.exportDetailedExcel}
+                                    </button>
+                                    <button className="clear-history-btn" onClick={clearOrderHistory}>
+                                        <i className="fas fa-trash"></i> {t.clearHistory}
+                                    </button>
+                                </div>
                             </div>
                             
                             <div className="report-summary">
@@ -2285,8 +4571,8 @@
                                     </div>
                                 </div>
                                 <div className="summary-card">
-                                    <h3>{t.refundedOrders}</h3>
-                                    <div className="value">{stats.refundedOrders}</div>
+                                    <h3>{t.productsSold}</h3>
+                                    <div className="value">{stats.totalProductsSold}</div>
                                 </div>
                             </div>
                             
@@ -2309,6 +4595,7 @@
                                         <tr>
                                             <th>{t.orderId}</th>
                                             <th>{t.dateTime}</th>
+                                            <th>{language === 'en' ? 'Cashier' : 'អ្នកទទួលប្រាក់'}</th>
                                             <th>{language === 'en' ? 'Items' : 'ធាតុ'}</th>
                                             <th>{t.total}</th>
                                             <th>{t.status}</th>
@@ -2319,10 +4606,11 @@
                                             <tr key={order.id}>
                                                 <td>#{order.id}</td>
                                                 <td>{new Date(order.date).toLocaleString()}</td>
+                                                <td>{order.cashier || 'N/A'}</td>
                                                 <td>
                                                     {order.items.map(item => (
                                                         <div key={item.id}>
-                                                            {item.quantity}x {language === 'en' ? item.name : menuData[Object.keys(menuData).find(cat => menuData[cat].some(i => i.id === item.id))]?.find(i => i.id === item.id)?.nameKh || item.name} 
+                                                            {item.quantity}x {language === 'en' ? item.name : item.nameKh} 
                                                             {item.sugarLevel && ` (${item.sugarLevel} ${language === 'en' ? 'sugar' : 'ស្ករ'})`}
                                                             {item.topping && ` + ${language === 'en' ? item.topping.name : item.topping.nameKh}`}
                                                             (${(item.price + (item.topping ? item.topping.price : 0)).toFixed(2)})
@@ -2355,6 +4643,18 @@
                         </div>
                     )}
                     
+                    {/* Print Status Modal */}
+                    {showPrintStatus && (
+                        <PrintStatusModal 
+                            status={printStatus}
+                            onRetry={retryPrint}
+                            onFallback={fallbackToBrowserPrint}
+                            onClose={closePrintStatus}
+                            language={language}
+                        />
+                    )}
+                    
+                    {/* Existing modals... */}
                     {showCustomizationModal && (
                         <CustomizationModal 
                             item={selectedItem}
@@ -2372,16 +4672,37 @@
                             orderNumber={lastOrder.id}
                             onClose={closeReceipt}
                             onPrint={printReceipt}
-                            onPrintTSP100={printToTSP100}
                             language={language}
                             showKhrPrices={showKhrPrices}
+                            discount={lastOrder.discount}
+                        />
+                    )}
+                    
+                    {showPrinterConfig && (
+                        <PrinterConfigModal 
+                            onClose={() => setShowPrinterConfig(false)}
+                            onSave={handleSavePrinterSettings}
+                            language={language}
+                            currentSettings={printerSettings}
+                        />
+                    )}
+                    
+                    {showProductManager && (
+                        <ProductManagerModal 
+                            onClose={() => setShowProductManager(false)}
+                            language={language}
+                            onProductsUpdate={handleProductsUpdate}
+                            user={user}
                         />
                     )}
                 </div>
             );
         };
 
-        ReactDOM.render(<CafeDashboard />, document.getElementById('root'));
+        // Function to initialize the POS system after login
+        function initializePOS(user) {
+            ReactDOM.render(<CafeDashboard user={user} />, document.getElementById('root'));
+        }
     </script>
 </body>
 </html>
